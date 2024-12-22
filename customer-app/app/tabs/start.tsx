@@ -15,113 +15,39 @@ import {
 export default function Start() {
   const [showStart, setShowStart] = useState(true);
   const [loginForm, setLoginForm] = useState(true);
-
-  return (
-    <View style={styles.page}>
-      <LinearGradient
-        colors={["#70e000", "#9ef01a"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.gradient}
-      />
-      <ScrollView
-        contentContainerStyle={styles.main}
-        keyboardShouldPersistTaps="handled"
-      >
-        <View style={showStart ? styles.header : styles.header2}>
-          <Text style={showStart ? styles.heading : styles.heading2}>
-            Swish
-          </Text>
-        </View>
-        <View style={showStart ? styles.buttons : styles.buttons2}>
-          <TouchableOpacity
-            style={
-              showStart
-                ? styles.firstButton
-                : loginForm
-                ? styles.firstButton2
-                : styles.firstButton3
-            }
-            onPress={() => {
-              showStart ? setShowStart(false) : setShowStart(true);
-              // setShowStart(false);
-              setLoginForm(true);
-            }}
-          >
-            <Text
-              style={
-                showStart
-                  ? styles.loginText
-                  : loginForm
-                  ? styles.loginText2
-                  : styles.loginText3
-              }
-            >
-              {showStart ? "Log in to an existing account" : "Log In"}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={
-              showStart
-                ? styles.secondButton
-                : loginForm
-                ? styles.secondButton2
-                : styles.secondButton3
-            }
-            onPress={() => {
-              setShowStart(false);
-              setLoginForm(false);
-            }}
-          >
-            <Text
-              style={
-                showStart
-                  ? styles.registerText
-                  : loginForm
-                  ? styles.registerText2
-                  : styles.registerText3
-              }
-            >
-              {showStart ? "Create a new account" : "Register"}
-            </Text>
-          </TouchableOpacity>
-        </View>
-        {showStart ? (
-          <View></View>
-        ) : (
-          <View style={styles.formContainer}>
-            {loginForm ? <LoginForm /> : <RegisterForm />}
-          </View>
-        )}
-      </ScrollView>
-    </View>
-  );
-}
-
-function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [passwordConfirmation, setPasswordConfirmation] = useState("");
+
+  const resetFields = () => {
+    setEmail("");
+    setPassword("");
+    setPasswordConfirmation("");
+  };
 
   const handleLogin = async () => {
-    // router.push("./tabs/home");
+    // create a user object and pass it to backend
     const user = { email: email.toLowerCase(), password };
-    const response = await fetch(backendUrl + "/users/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(user),
-    });
 
-    await response
-      .json()
-      .then((data) => {
+    try {
+      const response = await fetch(backendUrl + "/users/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(user),
+      });
+
+      await response.json().then((data) => {
         if (data.error) {
+          // if there is an error
           console.error("An unknown error occurred. Please try again later.");
           resetFields();
           return;
         }
 
+        // check what we got back from the API
         switch (data.status) {
           case "loggedIn":
+            // if loggedIn, save the UID to local storage for later use
             saveSecureData("id", data.id.toString());
             router.push("/tabs/home");
             break;
@@ -137,59 +63,14 @@ function LoginForm() {
             console.error("An unknown error occurred. Please try again later.");
             resetFields();
         }
-      })
-      .catch((err) => console.error(err));
+      });
+    } catch (err) {
+      console.error(err);
+    }
   };
-
-  const resetFields = () => {
-    setEmail("");
-    setPassword("");
-  };
-
-  return (
-    <View style={styles.loginForm}>
-      <View style={styles.formHeader}>
-        <Text style={styles.formHeading}>Log in to an existing account</Text>
-      </View>
-      <View style={styles.form}>
-        <View style={styles.formField}>
-          <Text style={styles.formText}>Enter your email</Text>
-          <TextInput
-            placeholder="john@swish.com"
-            keyboardType="email-address"
-            value={email}
-            onChangeText={setEmail}
-            style={styles.input}
-            autoCapitalize="none"
-          />
-        </View>
-        <View style={styles.formField}>
-          <Text style={styles.formText}>Enter your password</Text>
-          <TextInput
-            placeholder="password"
-            secureTextEntry={true}
-            value={password}
-            onChangeText={setPassword}
-            style={styles.input}
-            autoCapitalize="none"
-          />
-        </View>
-        <View></View>
-        <TouchableOpacity style={styles.formButton} onPress={handleLogin}>
-          <Text style={styles.buttonText}>Log in</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-}
-
-function RegisterForm() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [passwordConfirmation, setPasswordConfirmation] = useState("");
-  const [registerForm, setRegisterForm] = useState(true);
 
   const handleRegister = async () => {
+    // check email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (emailRegex.test(email) === false) {
       Alert.alert("Wrong email format.");
@@ -197,6 +78,7 @@ function RegisterForm() {
       return;
     }
 
+    // check if password length is over 8
     if (password.length < 8) {
       Alert.alert("Password needs to be at least 8 characters long.");
       setPassword("");
@@ -204,267 +86,283 @@ function RegisterForm() {
       return;
     }
 
+    // check if password and passwordConfirmation match
     if (password !== passwordConfirmation) {
       Alert.alert("Passwords do not match.");
       setPasswordConfirmation("");
       return;
     }
 
+    // create a user object and pass it to the backend
     let newUser = { email: email.toLowerCase(), password };
 
-    const response = await fetch(backendUrl + "/users", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newUser),
-    });
+    try {
+      // create a new user in the database
+      const response = await fetch(backendUrl + "/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newUser),
+      });
 
-    await response
-      .json()
-      .then((data) => {
+      await response.json().then((data) => {
         if (data.error && data.error.Code === 19) {
+          // if its this error, the email is already registered
           Alert.alert("This email is already registered.");
           resetFields();
           return;
         }
+        // save UID to local storage for later use
         saveSecureData("id", data.id.toString());
-      })
-      .catch((err) => console.error(err));
-
-    setRegisterForm(false);
-    resetFields();
-  };
-
-  const resetFields = () => {
-    setEmail("");
-    setPassword("");
-    setPasswordConfirmation("");
+      });
+      resetFields();
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (
-    <View style={registerForm ? styles.registerForm : styles.otherForm}>
-      {registerForm ? (
-        <View style={styles.registerForm}>
-          <View style={styles.formHeader}>
-            <Text style={styles.formHeading}>Create a new account</Text>
-          </View>
-          <View style={styles.form}>
-            <View style={styles.formField}>
-              <Text style={styles.formText}>Enter your email</Text>
-              <TextInput
-                placeholder="adam@swish.com"
-                keyboardType="email-address"
-                value={email}
-                onChangeText={setEmail}
-                style={styles.input}
-                autoCapitalize="none"
-              />
-            </View>
-            <View style={styles.formField}>
-              <Text style={styles.formText}>Enter your password</Text>
-              <TextInput
-                placeholder="password"
-                secureTextEntry={true}
-                value={password}
-                onChangeText={setPassword}
-                style={styles.input}
-                autoCapitalize="none"
-              />
-            </View>
-            <View style={styles.formField}>
-              <Text style={styles.formText}>Confirm your password</Text>
-              <TextInput
-                placeholder="password"
-                secureTextEntry={true}
-                value={passwordConfirmation}
-                onChangeText={setPasswordConfirmation}
-                style={styles.input}
-                autoCapitalize="none"
-              />
-            </View>
-            <View></View>
-            <TouchableOpacity
-              style={styles.formButton}
-              onPress={handleRegister}
-            >
-              <Text style={styles.buttonText}>Register</Text>
-            </TouchableOpacity>
-          </View>
+    <View style={{ ...StyleSheet.absoluteFillObject }}>
+      <LinearGradient
+        colors={["#70e000", "#9ef01a"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={{ ...StyleSheet.absoluteFillObject }}
+      />
+      {/* Visible content on the scroll screen */}
+      <ScrollView
+        contentContainerStyle={{ flex: 1, alignItems: "center" }}
+        keyboardShouldPersistTaps="handled"
+      >
+        {/* Header container */}
+        <View style={showStart ? styles.startHeader : styles.header}>
+          {/* Heading */}
+          <Text
+            style={showStart ? textStyles.startHeading : textStyles.heading}
+          >
+            Swish
+          </Text>
         </View>
-      ) : (
-        <View></View>
-      )}
+        {/* Login and Register buttons container */}
+        <View style={showStart ? styles.startButtons : styles.buttons}>
+          {/* Login and Register buttons */}
+          <TouchableOpacity
+            style={
+              showStart
+                ? buttonStyles.startLoginButton
+                : loginForm
+                ? buttonStyles.selectedButton
+                : buttonStyles.unselectedButton
+            }
+            onPress={() => {
+              setShowStart(false);
+              setLoginForm(true);
+            }}
+          >
+            <Text
+              style={
+                showStart
+                  ? textStyles.startLoginText
+                  : loginForm
+                  ? textStyles.selectedText
+                  : textStyles.unselectedText
+              }
+            >
+              {showStart ? "Log in to an existing account" : "Log in"}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={
+              showStart
+                ? buttonStyles.startRegisterButton
+                : loginForm
+                ? buttonStyles.unselectedButton
+                : buttonStyles.selectedButton
+            }
+            onPress={() => {
+              setShowStart(false);
+              setLoginForm(false);
+            }}
+          >
+            <Text
+              style={
+                showStart
+                  ? textStyles.startRegisterText
+                  : loginForm
+                  ? textStyles.unselectedText
+                  : textStyles.selectedText
+              }
+            >
+              {showStart ? "Create a new account" : "Register"}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => {
+              showStart ? setShowStart(false) : setShowStart(true);
+            }}
+          >
+            <Text>back</Text>
+          </TouchableOpacity>
+        </View>
+        {/* Form container - only visible when showStart is false */}
+        {!showStart && (
+          // Container of both forms
+          <View style={styles.formContainer}>
+            {loginForm ? (
+              // Login form itself
+              <View style={styles.loginForm}>
+                {/* Login form header */}
+                <View style={styles.formHeader}>
+                  <Text style={textStyles.white}>Log in to your account</Text>
+                </View>
+                {/* Login form fields */}
+                <View style={styles.formFields}>
+                  {/* Each login form field */}
+                  <View style={styles.formField}>
+                    <Text style={textStyles.white}>Enter your email</Text>
+                    <TextInput
+                      placeholder="john@swish.com"
+                      keyboardType="email-address"
+                      value={email}
+                      onChangeText={setEmail}
+                      style={styles.fieldInput}
+                      autoCapitalize="none"
+                    />
+                  </View>
+                  <View style={styles.formField}>
+                    <Text style={textStyles.white}>Enter your password</Text>
+                    <TextInput
+                      placeholder="password"
+                      secureTextEntry={true}
+                      value={password}
+                      onChangeText={setPassword}
+                      style={styles.fieldInput}
+                      autoCapitalize="none"
+                    />
+                  </View>
+                  {/* Login form Button */}
+                  <TouchableOpacity
+                    style={styles.formButton}
+                    onPress={handleLogin}
+                  >
+                    <Text style={textStyles.white}>Log in</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ) : (
+              // Register form itself
+              <View style={styles.registerForm}>
+                {/* Register form header */}
+                <View style={styles.formHeader}>
+                  <Text style={textStyles.white}>Create a new account</Text>
+                </View>
+                {/* Register form fields */}
+                <View style={styles.formFields}>
+                  {/* Each register form field */}
+                  <View style={styles.formField}>
+                    <Text style={textStyles.white}>Enter your email</Text>
+                    <TextInput
+                      placeholder="john@swish.com"
+                      keyboardType="email-address"
+                      value={email}
+                      onChangeText={setEmail}
+                      style={styles.fieldInput}
+                      autoCapitalize="none"
+                    />
+                  </View>
+                  <View style={styles.formField}>
+                    <Text style={textStyles.white}>Enter your password</Text>
+                    <TextInput
+                      placeholder="password"
+                      secureTextEntry={true}
+                      value={password}
+                      onChangeText={setPassword}
+                      style={styles.fieldInput}
+                      autoCapitalize="none"
+                    />
+                  </View>
+                  <View style={styles.formField}>
+                    <Text style={textStyles.white}>Confirm your password</Text>
+                    <TextInput
+                      placeholder="password"
+                      secureTextEntry={true}
+                      value={passwordConfirmation}
+                      onChangeText={setPasswordConfirmation}
+                      style={styles.fieldInput}
+                      autoCapitalize="none"
+                    />
+                  </View>
+                  {/* Register form Button */}
+                  <TouchableOpacity
+                    style={styles.formButton}
+                    onPress={handleRegister}
+                  >
+                    <Text style={textStyles.white}>Register</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+          </View>
+        )}
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  page: { ...StyleSheet.absoluteFillObject },
-
-  gradient: { ...StyleSheet.absoluteFillObject },
-
-  main: {
+  startHeader: {
     flex: 1,
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 25,
+    justifyContent: "flex-end",
+    marginBottom: "8%",
   },
 
   header: {
-    flex: 1,
+    flex: 3,
     justifyContent: "flex-end",
   },
 
-  header2: {
-    marginTop: 20,
-    flex: 1.5,
-    justifyContent: "flex-end",
-  },
-
-  heading: {
-    fontFamily: "Inter",
-    fontSize: 70,
-    color: "white",
-  },
-
-  heading2: {
-    fontSize: 30,
-    color: "white",
-  },
-
-  buttons: {
+  startButtons: {
     width: "66%",
     flex: 1.3,
     justifyContent: "flex-start",
     gap: "10",
   },
 
-  buttons2: {
+  buttons: {
+    marginTop: "6%",
+    marginBottom: "6%",
     flexDirection: "row",
     width: "66%",
     flex: 1,
     justifyContent: "center",
     alignItems: "flex-start",
-    gap: "25",
-  },
-
-  firstButton: {
-    height: "8%",
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "white",
-    borderRadius: 8,
-  },
-
-  firstButton2: {
-    flex: 1,
-    height: 32,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "white",
-    borderRadius: 8,
-  },
-
-  firstButton3: {
-    flex: 1,
-    height: 32,
-    justifyContent: "center",
-    alignItems: "center",
-    borderColor: "white",
-    borderWidth: 2,
-    borderRadius: 8,
-  },
-
-  secondButton: {
-    height: "8%",
-    justifyContent: "center",
-    alignItems: "center",
-    borderColor: "white",
-    borderWidth: 2,
-    borderRadius: 8,
-  },
-
-  secondButton2: {
-    flex: 1,
-    height: 32,
-    justifyContent: "center",
-    alignItems: "center",
-    borderColor: "white",
-    borderWidth: 2,
-    borderRadius: 8,
-  },
-
-  secondButton3: {
-    flex: 1,
-    height: 32,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "white",
-    borderRadius: 8,
-  },
-
-  loginText: {
-    fontSize: 16,
-  },
-
-  loginText2: {
-    fontSize: 14,
-  },
-
-  loginText3: {
-    color: "white",
-    fontSize: 14,
-  },
-
-  registerText: {
-    color: "white",
-    fontSize: 16,
-  },
-
-  registerText2: {
-    color: "white",
-    fontSize: 14,
-  },
-
-  registerText3: {
-    fontSize: 14,
-  },
-
-  registerTextOn: {
-    color: "white",
-    fontSize: 14,
+    gap: "10%",
   },
 
   formContainer: {
-    flex: 9,
+    flex: 12,
     width: "80%",
     justifyContent: "flex-start",
-    alignItems: "center",
   },
 
   loginForm: {
     height: "50%",
-    width: "100%",
     alignItems: "center",
-    padding: 10,
+    padding: "2%",
     backgroundColor: "#38b000",
     borderRadius: 16,
     shadowRadius: 3,
-    shadowOpacity: 0.4,
+    shadowOpacity: 0.3,
     shadowOffset: { width: 0, height: 2 },
   },
 
-  otherForm: {},
-
   registerForm: {
     height: "60%",
-    width: "100%",
     alignItems: "center",
-    padding: 10,
+    padding: "2%",
     backgroundColor: "#38b000",
     borderRadius: 16,
     shadowRadius: 3,
-    shadowOpacity: 0.4,
+    shadowOpacity: 0.3,
     shadowOffset: { width: 0, height: 2 },
   },
 
@@ -474,11 +372,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  formHeading: {
-    color: "white",
-  },
-
-  form: {
+  formFields: {
     flex: 3,
     width: "90%",
     flexDirection: "column",
@@ -489,11 +383,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
 
-  formText: {
-    color: "white",
-  },
-
-  input: {
+  fieldInput: {
     backgroundColor: "white",
     padding: 4,
     paddingLeft: 8,
@@ -503,14 +393,84 @@ const styles = StyleSheet.create({
 
   formButton: {
     height: 32,
+    marginTop: 16,
     alignItems: "center",
     justifyContent: "center",
     borderColor: "white",
     borderWidth: 2,
     borderRadius: 6,
   },
+});
 
-  buttonText: {
+const textStyles = StyleSheet.create({
+  startHeading: {
+    fontFamily: "Inter",
+    fontSize: 70,
     color: "white",
+  },
+
+  heading: {
+    fontSize: 30,
+    color: "white",
+  },
+
+  startLoginText: {
+    fontSize: 16,
+  },
+
+  startRegisterText: {
+    fontSize: 16,
+    color: "white",
+  },
+
+  selectedText: {
+    fontSize: 14,
+  },
+
+  unselectedText: {
+    fontSize: 14,
+    color: "white",
+  },
+
+  white: {
+    color: "white",
+  },
+});
+
+const buttonStyles = StyleSheet.create({
+  startLoginButton: {
+    height: "8%",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 8,
+    backgroundColor: "white",
+  },
+
+  startRegisterButton: {
+    height: "8%",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 8,
+    borderColor: "white",
+    borderWidth: 2,
+  },
+
+  selectedButton: {
+    flex: 1,
+    height: 32,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 8,
+    backgroundColor: "white",
+  },
+
+  unselectedButton: {
+    flex: 1,
+    height: 32,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 8,
+    borderColor: "white",
+    borderWidth: 2,
   },
 });
