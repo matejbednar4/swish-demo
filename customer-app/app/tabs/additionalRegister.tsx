@@ -11,7 +11,7 @@ import {
   View,
 } from "react-native";
 
-export default function RegisterForm() {
+export default function AdditionalRegister() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [location, setLocation] = useState("");
