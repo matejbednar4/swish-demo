@@ -53,8 +53,7 @@ export default function RegisterAndLogin({
         switch (data.status) {
           case "loggedIn":
             // if loggedIn, save the UID to local storage for later use
-            saveSecureData("id", data.id.toString());
-            // router.push("/tabs/home");
+            loginUser(data.id);
             break;
           case "userNotFound":
             Alert.alert("Email not registered.");
@@ -68,6 +67,24 @@ export default function RegisterAndLogin({
             console.error("An unknown error occurred. Please try again later.");
             resetFields();
         }
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const loginUser = async (uid: any) => {
+    saveSecureData("id", uid.toString());
+
+    try {
+      const response = await fetch(backendUrl + `/user?id=${uid}`);
+
+      await response.json().then((data) => {
+        if (data.firstName === "") {
+          navigation.navigate("AdditionalForm");
+          return;
+        }
+        navigation.navigate("Home");
       });
     } catch (err) {
       console.error(err);
@@ -120,34 +137,22 @@ export default function RegisterAndLogin({
         saveSecureData("id", data.id.toString());
       });
       resetFields();
-      navigation.navigate("RegisterForm");
+      navigation.navigate("AdditionalForm");
     } catch (err) {
       console.error(err);
     }
   };
 
   return (
-    <View style={{ flex: 1 }}>
-      <LinearGradient
-        colors={["#70e000", "#9ef01a"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={{ ...StyleSheet.absoluteFillObject }}
-      />
+    <View style={{ flex: 1, backgroundColor: "white" }}>
       {/* Visible content on the scroll screen */}
       <ScrollView
         contentContainerStyle={{ flex: 1, alignItems: "center" }}
         keyboardShouldPersistTaps="handled"
+        scrollEnabled={false}
       >
         <View style={styles.header}>
           {/* Heading */}
-          <TouchableOpacity
-            onPress={() => {
-              navigation.navigate("Start");
-            }}
-          >
-            <Text>Back</Text>
-          </TouchableOpacity>
           <Text style={textStyles.heading}>Swish</Text>
         </View>
         {/* Login and Register buttons container */}
@@ -193,10 +198,12 @@ export default function RegisterAndLogin({
         <View style={styles.formContainer}>
           {loginForm ? (
             // Login form itself
-            <View style={styles.loginForm}>
+            <View style={styles.form}>
               {/* Login form header */}
               <View style={styles.formHeader}>
-                <Text>Log in to your account</Text>
+                <Text style={textStyles.formHeading}>
+                  Log in to your account
+                </Text>
               </View>
               {/* Login form fields */}
               <View style={styles.formFields}>
@@ -223,21 +230,14 @@ export default function RegisterAndLogin({
                     autoCapitalize="none"
                   />
                 </View>
-                {/* Login form Button */}
-                <TouchableOpacity
-                  style={styles.formButton}
-                  onPress={handleLogin}
-                >
-                  <Text style={{ color: "white" }}>Log in</Text>
-                </TouchableOpacity>
               </View>
             </View>
           ) : (
             // Register form itself
-            <View style={styles.registerForm}>
+            <View style={styles.form}>
               {/* Register form header */}
               <View style={styles.formHeader}>
-                <Text>Create a new account</Text>
+                <Text style={textStyles.formHeading}>Create a new account</Text>
               </View>
               {/* Register form fields */}
               <View style={styles.formFields}>
@@ -275,15 +275,22 @@ export default function RegisterAndLogin({
                     autoCapitalize="none"
                   />
                 </View>
-                {/* Register form Button */}
-                <TouchableOpacity
-                  style={styles.formButton}
-                  onPress={handleRegister}
-                >
-                  <Text style={{ color: "white" }}>Register</Text>
-                </TouchableOpacity>
               </View>
             </View>
+          )}
+          {loginForm ? (
+            <TouchableOpacity style={styles.formButton} onPress={handleLogin}>
+              <Text style={{ color: "white", fontWeight: "600" }}>Log in</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              style={styles.formButton}
+              onPress={handleRegister}
+            >
+              <Text style={{ color: "white", fontWeight: "600" }}>
+                Register
+              </Text>
+            </TouchableOpacity>
           )}
         </View>
       </ScrollView>
@@ -293,57 +300,46 @@ export default function RegisterAndLogin({
 
 const styles = StyleSheet.create({
   header: {
-    flex: 3,
+    marginTop: "30%",
     justifyContent: "flex-end",
   },
 
   buttons: {
-    marginTop: "6%",
-    marginBottom: "6%",
+    marginTop: "10%",
+    marginBottom: "5%",
     flexDirection: "row",
-    width: "66%",
-    flex: 1,
+    width: "80%",
     justifyContent: "center",
     alignItems: "flex-start",
-    gap: "10%",
+    gap: "5%",
   },
 
   formContainer: {
-    flex: 12,
     width: "80%",
-    justifyContent: "flex-start",
+    height: "100%",
   },
 
-  loginForm: {
-    height: "50%",
+  form: {
+    position: "fixed",
     alignItems: "center",
-    padding: "2%",
-    backgroundColor: "#ffffff",
+    backgroundColor: "#f8f9fa",
     borderRadius: 16,
-    shadowRadius: 3,
-    shadowOpacity: 0.3,
-    shadowOffset: { width: 0, height: 2 },
-  },
-
-  registerForm: {
-    height: "60%",
-    alignItems: "center",
-    padding: "2%",
-    backgroundColor: "#ffffff",
-    borderRadius: 16,
-    shadowRadius: 3,
-    shadowOpacity: 0.3,
-    shadowOffset: { width: 0, height: 2 },
+    borderBottomLeftRadius: 8,
+    borderBottomRightRadius: 8,
+    paddingVertical: "5%",
+    borderColor: "#ced4da",
+    borderWidth: 1,
   },
 
   formHeader: {
-    height: 66,
-    justifyContent: "center",
-    alignItems: "center",
+    position: "fixed",
+    marginBottom: "8%",
+    paddingHorizontal: "5%",
+    justifyContent: "flex-start",
+    alignSelf: "flex-start",
   },
 
   formFields: {
-    flex: 3,
     width: "90%",
     flexDirection: "column",
     gap: 16,
@@ -354,36 +350,48 @@ const styles = StyleSheet.create({
   },
 
   fieldInput: {
-    borderWidth: 1,
     padding: 4,
     paddingLeft: 8,
     height: 32,
     borderRadius: 6,
+    borderColor: "#ced4da",
+    borderWidth: 1,
+    backgroundColor: "white",
   },
 
   formButton: {
     backgroundColor: "#70e000",
-    height: 32,
-    marginTop: 16,
+    marginTop: 8,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 6,
+    borderRadius: 16,
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
+    paddingVertical: 8,
   },
 });
 
 const textStyles = StyleSheet.create({
   heading: {
-    fontSize: 30,
-    color: "white",
+    fontSize: 45,
+    fontWeight: "600",
+    color: "#70e000",
+  },
+
+  formHeading: {
+    fontWeight: "500",
+    fontSize: 18,
   },
 
   selectedText: {
     fontSize: 14,
+    fontWeight: "600",
+    color: "white",
   },
 
   unselectedText: {
     fontSize: 14,
-    color: "white",
+    fontWeight: "400",
   },
 });
 
@@ -394,7 +402,7 @@ const buttonStyles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 8,
-    backgroundColor: "white",
+    backgroundColor: "#70e000",
   },
 
   unselectedButton: {
@@ -403,7 +411,7 @@ const buttonStyles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 8,
-    borderColor: "white",
-    borderWidth: 2,
+    borderColor: "#ced4da",
+    borderWidth: 1,
   },
 });

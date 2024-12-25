@@ -10,7 +10,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Start({ navigation }: { navigation: any }) {
   return (
-    <SafeAreaView style={{ ...StyleSheet.absoluteFillObject, flex: 1 }}>
+    <SafeAreaView style={{ flex: 1 }}>
       <LinearGradient
         colors={["#70e000", "#9ef01a"]}
         start={{ x: 0, y: 0 }}
@@ -21,11 +21,13 @@ export default function Start({ navigation }: { navigation: any }) {
       <ScrollView
         contentContainerStyle={{ flex: 1, alignItems: "center" }}
         keyboardShouldPersistTaps="handled"
+        scrollEnabled={false}
       >
         {/* Header container */}
         <View style={styles.startHeader}>
           {/* Heading */}
           <Text style={textStyles.startHeading}>Swish</Text>
+          <Text style={textStyles.motto}>Experience And Inspire</Text>
         </View>
         {/* Login and Register buttons container */}
         <View style={styles.startButtons}>
@@ -60,7 +62,8 @@ const styles = StyleSheet.create({
   startHeader: {
     flex: 1,
     justifyContent: "flex-end",
-    marginBottom: "8%",
+    marginBottom: "10%",
+    alignItems: "center",
   },
 
   startButtons: {
@@ -73,17 +76,26 @@ const styles = StyleSheet.create({
 
 const textStyles = StyleSheet.create({
   startHeading: {
-    fontFamily: "Inter",
+    position: "absolute",
+    fontWeight: "700",
     fontSize: 70,
     color: "white",
+    paddingBottom: "1.5%",
+  },
+
+  motto: {
+    color: "white",
+    fontWeight: "400",
   },
 
   startLoginText: {
-    fontSize: 16,
+    fontSize: 14,
+    fontWeight: "600",
   },
 
   startRegisterText: {
-    fontSize: 16,
+    fontSize: 14,
+    fontWeight: "400",
     color: "white",
   },
 });
@@ -103,6 +115,6 @@ const buttonStyles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 8,
     borderColor: "white",
-    borderWidth: 2,
+    borderWidth: 1,
   },
 });

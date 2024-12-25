@@ -2,8 +2,9 @@ import React from "react";
 import { createStackNavigator } from "@react-navigation/stack";
 import Start from "./tabs/start";
 import RegisterAndLogin from "./tabs/registerAndLogin";
-import AdditionalRegister from "./tabs/additionalRegister";
 import { StyleSheet, View } from "react-native";
+import Home from "./tabs/home";
+import AdditionalForm from "./tabs/additionalForm";
 
 const Stack = createStackNavigator();
 
@@ -19,27 +20,12 @@ export default function App() {
         screenOptions={{
           headerShown: false,
           gestureEnabled: true,
-          cardStyleInterpolator: ({ current, layouts }) => ({
-            cardStyle: {
-              backgroundColor: "transparent",
-              transform: [
-                {
-                  translateY: current.progress.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [layouts.screen.height, 0], // Slide-up animation
-                  }),
-                },
-              ],
-            },
-          }),
         }}
       >
         <Stack.Screen name="Start" component={Start} />
         <Stack.Screen name="RegisterAndLogin" component={RegisterAndLogin} />
-        <Stack.Screen
-          name="AdditionalRegister"
-          component={AdditionalRegister}
-        />
+        <Stack.Screen name="AdditionalForm" component={AdditionalForm} />
+        <Stack.Screen name="Home" component={Home} />
       </Stack.Navigator>
     </View>
   );
