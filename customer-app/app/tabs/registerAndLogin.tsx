@@ -48,7 +48,7 @@ export default function RegisterAndLogin({
     }
 
     if (response.json.error) {
-      console.error("An unknown error occurred. Please try again later.");
+      console.error(response.json.error);
       resetFields();
       return;
     }
@@ -64,7 +64,7 @@ export default function RegisterAndLogin({
     const response = await sdk.getCustomerById(uid);
 
     if (response.json.error) {
-      console.error("An unknown error occured, please try again later");
+      console.error(response.json.error);
       return;
     }
 
@@ -115,11 +115,11 @@ export default function RegisterAndLogin({
     }
 
     if (response.json.error) {
-      console.error("An unknown error occured, please try again later");
+      console.error(response.json.error);
       return;
     }
 
-    if (response.status === 200) {
+    if (response.status === 201) {
       saveSecureData("id", response.json.id.toString());
       navigation.navigate("AdditionalForm");
     }

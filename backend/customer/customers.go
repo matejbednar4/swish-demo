@@ -205,7 +205,7 @@ func UpdateCustomer(c *gin.Context, db *sql.DB) {
 
 	if rowsAffected == 0 {
 		// customer not found
-		c.JSON(http.StatusBadRequest, gin.H{"error": "customer not found"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Customer not found"})
 		return
 	}
 

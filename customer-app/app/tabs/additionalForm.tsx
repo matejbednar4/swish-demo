@@ -1,6 +1,6 @@
 import { getSecureData } from "@/components/global/global";
 import * as sdk from "../../../sdk/src/routes/customer.js";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Alert,
   ScrollView,
@@ -15,6 +15,20 @@ export default function AdditionalForm({ navigation }: { navigation: any }) {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [location, setLocation] = useState("");
+  const [uid, setUid] = useState<string | null>(null);
+
+  const fetchData = async () => {
+    try {
+      const response = await getSecureData("id");
+      setUid(response || null);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   const handleSubmit = async () => {
     if (firstName === "" || lastName === "" || location === "") {
@@ -23,15 +37,10 @@ export default function AdditionalForm({ navigation }: { navigation: any }) {
     }
 
     const data = { firstName, lastName, location };
-    let uid;
-    await getSecureData("id")
-      .then((value) => (uid = Number(value)))
-      .catch((err) => console.error(err));
-
     const response = await sdk.updateCustomer(uid, data);
 
     if (response.json.error) {
-      console.error("An unknown error occured, please try again later");
+      console.error(response.json.error);
       return;
     }
 

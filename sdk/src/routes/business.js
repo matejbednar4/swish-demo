@@ -83,7 +83,7 @@ async function updateBusiness(id, data) {
     const response = await fetch(
       backendUrl + endpoints.business + `?id=${id}`,
       {
-        method: "PATCH",
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       }
