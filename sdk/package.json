@@ -1,0 +1,11 @@
+{
+    "name": "sdk",
+    "type": "module",
+    "version": "1.0.0",
+    "main": "global.js",
+    "scripts": {},
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "description": ""
+}

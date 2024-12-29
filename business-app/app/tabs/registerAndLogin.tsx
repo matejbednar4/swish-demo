@@ -1,5 +1,5 @@
-import { saveSecureData } from "@/components/global/global";
-import * as sdk from "../../../sdk/src/routes/customer.js";
+import { backendUrl, saveSecureData } from "@/components/global/global";
+import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
 import {
   Alert,
@@ -32,50 +32,62 @@ export default function RegisterAndLogin({
 
   const handleLogin = async () => {
     // create a user object and pass it to backend
-    const lowercaseEmail = email.toLowerCase();
+    const user = { email: email.toLowerCase(), password };
 
-    const response = await sdk.customerLogin(lowercaseEmail, password);
-    if (response.status === 401) {
-      Alert.alert("Wrong password.");
-      setPassword("");
-      return;
-    }
+    try {
+      const response = await fetch(backendUrl + "/business/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(user),
+      });
 
-    if (response.status === 404) {
-      Alert.alert("Email not registered.");
-      resetFields();
-      return;
-    }
+      await response.json().then((data) => {
+        if (data.error) {
+          // if there is an error
+          console.error("An unknown error occurred. Please try again later.");
+          resetFields();
+          return;
+        }
 
-    if (response.json.error) {
-      console.error("An unknown error occurred. Please try again later.");
-      resetFields();
-      return;
-    }
-
-    if (response.status === 200) {
-      loginUser(response.json.id);
+        // check what we got back from the API
+        switch (data.status) {
+          case "loggedIn":
+            // if loggedIn, save the UID to local storage for later use
+            loginUser(data.id);
+            break;
+          case "userNotFound":
+            Alert.alert("Email not registered.");
+            resetFields();
+            break;
+          case "wrongPassword":
+            Alert.alert("Wrong password.");
+            setPassword("");
+            break;
+          default:
+            console.error("An unknown error occurred. Please try again later.");
+            resetFields();
+        }
+      });
+    } catch (err) {
+      console.error(err);
     }
   };
 
   const loginUser = async (uid: any) => {
     saveSecureData("id", uid.toString());
 
-    const response = await sdk.getCustomerById(uid);
+    try {
+      const response = await fetch(backendUrl + `/business?id=${uid}`);
 
-    if (response.json.error) {
-      console.error("An unknown error occured, please try again later");
-      return;
-    }
-
-    if (response.json.firstName === "") {
-      // if the customer has not yet filled the additional form
-      navigation.navigate("AdditionalForm");
-      return;
-    }
-
-    if (response.status === 200) {
-      navigation.navigate("Home");
+      await response.json().then((data) => {
+        if (data.firstName === "") {
+          navigation.navigate("AdditionalForm");
+          return;
+        }
+        navigation.navigate("Home");
+      });
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -104,24 +116,30 @@ export default function RegisterAndLogin({
     }
 
     // create a user object and pass it to the backend
-    const lowercaseEmail = email.toLowerCase();
+    let newUser = { email: email.toLowerCase(), password };
 
-    const response = await sdk.createCustomer(lowercaseEmail, password);
+    try {
+      // create a new user in the database
+      const response = await fetch(backendUrl + "/business", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newUser),
+      });
 
-    if (response.status === 409) {
-      Alert.alert("This email is already registered.");
+      await response.json().then((data) => {
+        if (data.error && data.error.Code === 19) {
+          // if its this error, the email is already registered
+          Alert.alert("This email is already registered.");
+          resetFields();
+          return;
+        }
+        // save UID to local storage for later use
+        saveSecureData("id", data.id.toString());
+      });
       resetFields();
-      return;
-    }
-
-    if (response.json.error) {
-      console.error("An unknown error occured, please try again later");
-      return;
-    }
-
-    if (response.status === 200) {
-      saveSecureData("id", response.json.id.toString());
       navigation.navigate("AdditionalForm");
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -136,6 +154,7 @@ export default function RegisterAndLogin({
         <View style={styles.header}>
           {/* Heading */}
           <Text style={textStyles.heading}>Swish</Text>
+          <Text style={textStyles.motto}>For Businesses</Text>
         </View>
         {/* Login and Register buttons container */}
         <View style={styles.buttons}>
@@ -184,7 +203,7 @@ export default function RegisterAndLogin({
               {/* Login form header */}
               <View style={styles.formHeader}>
                 <Text style={textStyles.formHeading}>
-                  Log in to your account
+                  Log in to your business account
                 </Text>
               </View>
               {/* Login form fields */}
@@ -193,7 +212,7 @@ export default function RegisterAndLogin({
                 <View style={styles.formField}>
                   <Text>Enter your email</Text>
                   <TextInput
-                    placeholder="john@swish.com"
+                    placeholder="management@business.com"
                     keyboardType="email-address"
                     value={email}
                     onChangeText={setEmail}
@@ -219,7 +238,9 @@ export default function RegisterAndLogin({
             <View style={styles.form}>
               {/* Register form header */}
               <View style={styles.formHeader}>
-                <Text style={textStyles.formHeading}>Create a new account</Text>
+                <Text style={textStyles.formHeading}>
+                  Create a new business account
+                </Text>
               </View>
               {/* Register form fields */}
               <View style={styles.formFields}>
@@ -227,7 +248,7 @@ export default function RegisterAndLogin({
                 <View style={styles.formField}>
                   <Text>Enter your email</Text>
                   <TextInput
-                    placeholder="john@swish.com"
+                    placeholder="management@business.com"
                     keyboardType="email-address"
                     value={email}
                     onChangeText={setEmail}
@@ -284,6 +305,7 @@ const styles = StyleSheet.create({
   header: {
     marginTop: "30%",
     justifyContent: "flex-end",
+    alignItems: "center",
   },
 
   buttons: {
@@ -358,6 +380,11 @@ const textStyles = StyleSheet.create({
     fontSize: 45,
     fontWeight: "600",
     color: "#70e000",
+  },
+
+  motto: {
+    color: "#70e000",
+    fontWeight: "400",
   },
 
   formHeading: {

@@ -1,8 +1,10 @@
 package main
 
 import (
-	"backend/database"
-	"backend/users"
+	businesses "backend/business"
+	businessesDb "backend/business/database"
+	customers "backend/customer"
+	customersDb "backend/customer/database"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -10,24 +12,36 @@ import (
 )
 
 func main() {
-	db := database.LaunchDatabase()
-	defer db.Close()
-	database.CreateTable(db)
+	customersDatabase := customersDb.LaunchCustomersDb()
+	defer customersDatabase.Close()
+	customersDb.CreateCustomersTable(customersDatabase)
+
+	businessesDatabase := businessesDb.LaunchBusinessDb()
+	defer businessesDatabase.Close()
+	businessesDb.CreateBusinessTable(businessesDatabase)
 
 	router := gin.Default()
 	router.Use(cors.New(cors.Config{
-
-		AllowOrigins: []string{"http://localhost:3000"}, // Allow your frontend to access the backend
-		AllowMethods: []string{"GET", "POST", "PUT", "DELETE"},
+		AllowOrigins: []string{"http://localhost:3000"}, // Allow frontend to access the backend
+		AllowMethods: []string{"GET", "POST", "PUT", "PATCH", "DELETE"},
 		AllowHeaders: []string{"Origin", "Content-Type", "Authorization"},
 	}))
 
-	router.GET("/users", func(c *gin.Context) { users.GetUsers(c, db) })
-	router.GET("/user", func(c *gin.Context) { users.GetUserByIdOrEmail(c, db) })
-	router.POST("/users", func(c *gin.Context) { users.CreateUser(c, db) })
-	router.POST("/users/login", func(c *gin.Context) { users.Login(c, db) })
-	router.DELETE("/user", func(c *gin.Context) { users.DeleteUserById(c, db) })
-	router.PUT("/user/info", func(c *gin.Context) { users.AddUserInfo(c, db) })
+	// Customer accounts
+	router.GET("/customers", func(c *gin.Context) { customers.GetCustomers(c, customersDatabase) })
+	router.GET("/customer", func(c *gin.Context) { customers.GetCustomerById(c, customersDatabase) })
+	router.POST("/customer", func(c *gin.Context) { customers.CreateCustomer(c, customersDatabase) })
+	router.POST("/customer/login", func(c *gin.Context) { customers.CustomerLogin(c, customersDatabase) })
+	router.DELETE("/customer", func(c *gin.Context) { customers.DeleteCustomerById(c, customersDatabase) })
+	router.PATCH("/customer", func(c *gin.Context) { customers.UpdateCustomer(c, customersDatabase) })
+
+	// Business accounts
+	router.GET("/businesses", func(c *gin.Context) { businesses.GetBusinesses(c, businessesDatabase) })
+	router.GET("/business", func(c *gin.Context) { businesses.GetBusinessById(c, businessesDatabase) })
+	router.POST("/business", func(c *gin.Context) { businesses.CreateBusiness(c, businessesDatabase) })
+	router.POST("/business/login", func(c *gin.Context) { businesses.BusinessLogin(c, businessesDatabase) })
+	router.DELETE("/business", func(c *gin.Context) { businesses.DeleteBusinessById(c, businessesDatabase) })
+	router.PATCH("/business", func(c *gin.Context) { businesses.UpdateBusiness(c, businessesDatabase) })
 
 	router.Run(":8080")
 }

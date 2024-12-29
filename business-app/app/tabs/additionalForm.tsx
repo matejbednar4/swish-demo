@@ -1,5 +1,5 @@
-import { getSecureData } from "@/components/global/global";
-import * as sdk from "../../../sdk/src/routes/customer.js";
+import { backendUrl, getSecureData } from "@/components/global/global";
+import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
 import {
   Alert,
@@ -16,28 +16,29 @@ export default function AdditionalForm({ navigation }: { navigation: any }) {
   const [lastName, setLastName] = useState("");
   const [location, setLocation] = useState("");
 
-  const handleSubmit = async () => {
+  const handleButtonClick = async () => {
     if (firstName === "" || lastName === "" || location === "") {
-      Alert.alert("You must fill all of the fields");
+      Alert.alert("You must fill all fields");
       return;
     }
 
-    const data = { firstName, lastName, location };
-    let uid;
+    let id;
     await getSecureData("id")
-      .then((value) => (uid = Number(value)))
+      .then((value) => (id = Number(value)))
       .catch((err) => console.error(err));
+    const data = { id, firstName, lastName, location };
 
-    const response = await sdk.updateCustomer(uid, data);
-
-    if (response.json.error) {
-      console.error("An unknown error occured, please try again later");
-      return;
-    }
-
-    if (response.status === 200) {
-      navigation.navigate("Home");
-    }
+    await fetch(backendUrl + "/user/info", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    })
+      .then((response) => {
+        if (response.status == 200) {
+          navigation.navigate("Home");
+        }
+      })
+      .catch((err) => console.error(err));
   };
 
   return (
@@ -96,7 +97,10 @@ export default function AdditionalForm({ navigation }: { navigation: any }) {
               {/* form Button */}
             </View>
           </View>
-          <TouchableOpacity style={styles.formButton} onPress={handleSubmit}>
+          <TouchableOpacity
+            style={styles.formButton}
+            onPress={handleButtonClick}
+          >
             <Text style={{ color: "white", fontWeight: "600" }}>Continue</Text>
           </TouchableOpacity>
         </View>
