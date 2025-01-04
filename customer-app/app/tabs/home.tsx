@@ -5,9 +5,6 @@ import {
 } from "@/components/global/global";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { useEffect, useState } from "react";
-import { AppStackParamList } from "./app";
-import TopMenu from "@/components/TopMenu";
-import BottomNavigation from "@/components/BottomNavigation";
 import * as sdk from "../../../sdk/src/routes/customer";
 import {
   Image,
@@ -20,13 +17,7 @@ import {
   View,
 } from "react-native";
 
-type HomeScreenNavigationProp = StackNavigationProp<AppStackParamList, "Home">;
-
-export default function Home({
-  navigation,
-}: {
-  navigation: HomeScreenNavigationProp;
-}) {
+export default function Home({ navigation }: { navigation: any }) {
   const [customer, setCustomer] = useState<sdk.Customer>(emptyCustomer);
 
   const getCustomer = async () => {

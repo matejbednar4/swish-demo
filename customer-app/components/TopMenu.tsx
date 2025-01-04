@@ -3,12 +3,10 @@ import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import * as sdk from "../../sdk/src/routes/customer";
 import { getStoredData } from "./global/global";
 import { emptyCustomer } from "./global/global";
-import { AppStackParamList } from "@/app/tabs/app";
-import { StackNavigationProp } from "@react-navigation/stack";
+import { useNavigation } from "@react-navigation/native";
 
-type NavigationProp = StackNavigationProp<AppStackParamList, "Home">;
-
-export default function TopMenu({ navigation }: { navigation: any }) {
+export default function TopMenu() {
+  const navigation = useNavigation;
   const [customer, setCustomer] = useState<sdk.Customer>(emptyCustomer);
 
   const getCustomer = async () => {
@@ -25,7 +23,7 @@ export default function TopMenu({ navigation }: { navigation: any }) {
     <View style={styles.topMenu}>
       <TouchableOpacity
         style={{ height: "80%", justifyContent: "center" }}
-        onPress={() => navigation.navigate("Home")}
+        onPress={() => navigation.call("Home")}
       >
         <Text style={textStyles.heading}>Swish</Text>
       </TouchableOpacity>

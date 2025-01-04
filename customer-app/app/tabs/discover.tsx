@@ -1,8 +1,5 @@
 import { getStoredData, emptyCustomer } from "@/components/global/global";
-import { StackNavigationProp } from "@react-navigation/stack";
 import { useEffect, useState } from "react";
-import { AppStackParamList } from "./app";
-import BottomNavigation from "@/components/BottomNavigation";
 import * as sdk from "../../../sdk/src/routes/customer";
 import {
   Image,
@@ -14,17 +11,10 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 
-type DiscoverScreenNavigationProp = StackNavigationProp<
-  AppStackParamList,
-  "Discover"
->;
-
-export default function Discover({
-  navigation,
-}: {
-  navigation: DiscoverScreenNavigationProp;
-}) {
+export default function Discover() {
+  const navigation = useNavigation;
   const [customer, setCustomer] = useState<sdk.Customer>(emptyCustomer);
 
   const getCustomer = async () => {
@@ -45,7 +35,9 @@ export default function Discover({
           style={{ backgroundColor: "#ffffff" }}
           contentContainerStyle={styles.scrollView}
         >
-          <Text>Hello</Text>
+          <TouchableOpacity onPress={() => navigation.navigate("Home")}>
+            <Text>Swish</Text>
+          </TouchableOpacity>
         </ScrollView>
       </SafeAreaView>
     </View>

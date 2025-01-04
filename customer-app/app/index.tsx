@@ -1,6 +1,8 @@
 import { LinearGradient } from "expo-linear-gradient";
+import { useState } from "react";
+import { storeData } from "@/components/global/global";
+import { useRouter } from "expo-router";
 import * as sdk from "../../sdk/src/routes/customer";
-import { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -10,8 +12,6 @@ import {
   TextInput,
   Alert,
 } from "react-native";
-import { getStoredData, storeData } from "@/components/global/global";
-import { useRouter } from "expo-router";
 
 export default function Index() {
   const [start, setStart] = useState(true);
