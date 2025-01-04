@@ -3,12 +3,16 @@
     "type": "module",
     "version": "1.0.0",
     "main": "global.js",
-    "scripts": {},
+    "scripts": {
+        "build": "tsc"
+    },
     "keywords": [],
     "author": "",
     "license": "ISC",
     "description": "",
     "dependencies": {
-        "@babel/runtime": "^7.26.0"
+        "@babel/runtime": "^7.26.0",
+        "ts-node": "^10.9.2",
+        "typescript": "^5.7.2"
     }
 }

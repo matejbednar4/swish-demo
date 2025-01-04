@@ -1,50 +1,34 @@
 import { useEffect, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import * as sdk from "../../sdk/src/routes/customer";
+import { getStoredData } from "./global/global";
+import { emptyCustomer } from "./global/global";
+import { AppStackParamList } from "@/app/tabs/app";
+import { StackNavigationProp } from "@react-navigation/stack";
 
-interface Customer {
-  id: number;
-  email: string;
-  firstName: string;
-  lastName: string;
-  address: string;
-  score: number;
-  createdAt: Date;
-}
+type NavigationProp = StackNavigationProp<AppStackParamList, "Home">;
 
-const emptyCustomer: Customer = {
-  id: 0,
-  email: "",
-  firstName: "",
-  lastName: "",
-  address: "",
-  score: 0,
-  createdAt: new Date(),
-};
+export default function TopMenu({ navigation }: { navigation: any }) {
+  const [customer, setCustomer] = useState<sdk.Customer>(emptyCustomer);
 
-export default function TopMenu({ uid }: { uid: string }) {
-  const [customer, setCustomer] = useState<Customer>(emptyCustomer);
-
-  const fetchCustomer = async () => {
-    const response = await sdk.getCustomerById(Number(uid));
-
-    if ("error" in response) {
-      console.error("Failed to fetch customer");
-      return;
-    }
-
-    if (response.status === 200) {
-      setCustomer(response.json);
-    }
+  const getCustomer = async () => {
+    const response = await getStoredData("customer");
+    if (!response) return;
+    setCustomer(JSON.parse(response));
   };
 
   useEffect(() => {
-    fetchCustomer();
+    getCustomer();
   }, []);
 
   return (
     <View style={styles.topMenu}>
-      <Text style={textStyles.heading}>Swish</Text>
+      <TouchableOpacity
+        style={{ height: "80%", justifyContent: "center" }}
+        onPress={() => navigation.navigate("Home")}
+      >
+        <Text style={textStyles.heading}>Swish</Text>
+      </TouchableOpacity>
       <View style={styles.rightSide}>
         <View style={styles.pfp}>
           <Text>{customer.firstName}</Text>

@@ -1,7 +1,14 @@
-import BottomNavigation from "@/components/BottomNavigation";
-import { getSecureData } from "@/components/global/global";
-import TopMenu from "@/components/TopMenu";
+import {
+  storeData,
+  getStoredData,
+  emptyCustomer,
+} from "@/components/global/global";
+import { StackNavigationProp } from "@react-navigation/stack";
 import { useEffect, useState } from "react";
+import { AppStackParamList } from "./app";
+import TopMenu from "@/components/TopMenu";
+import BottomNavigation from "@/components/BottomNavigation";
+import * as sdk from "../../../sdk/src/routes/customer";
 import {
   Image,
   SafeAreaView,
@@ -13,28 +20,30 @@ import {
   View,
 } from "react-native";
 
-export default function Home({ navigation }: { navigation: any }) {
-  const [uid, setUid] = useState("");
+type HomeScreenNavigationProp = StackNavigationProp<AppStackParamList, "Home">;
 
-  const fetchData = async () => {
-    try {
-      const response = await getSecureData("customer_id");
-      if (response) {
-        setUid(response);
-      }
-    } catch (err) {
-      console.error(err);
-    }
+export default function Home({
+  navigation,
+}: {
+  navigation: HomeScreenNavigationProp;
+}) {
+  const [customer, setCustomer] = useState<sdk.Customer>(emptyCustomer);
+
+  const getCustomer = async () => {
+    const response = await getStoredData("customer");
+    if (!response) return;
+
+    setCustomer(JSON.parse(response));
   };
 
   useEffect(() => {
-    fetchData();
+    getCustomer();
   }, []);
 
   return (
     <View style={{ flex: 1, backgroundColor: "#f8f9fa" }}>
       <SafeAreaView style={{ flex: 1 }}>
-        <TopMenu uid={uid} />
+        {/* <TopMenu navigation={navigation} /> */}
         <ScrollView
           style={{ backgroundColor: "#ffffff" }}
           contentContainerStyle={styles.scrollView}
@@ -56,7 +65,7 @@ export default function Home({ navigation }: { navigation: any }) {
           </TouchableOpacity>
           <Search />
         </ScrollView>
-        <BottomNavigation />
+        {/* <BottomNavigation /> */}
       </SafeAreaView>
     </View>
   );

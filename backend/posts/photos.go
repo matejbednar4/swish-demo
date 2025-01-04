@@ -1,0 +1,5 @@
+package photos
+
+func addPhoto() {
+
+}

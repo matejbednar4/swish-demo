@@ -1,6 +1,6 @@
 import { backendUrl, saveSecureData } from "@/components/global/global";
-import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
+import * as sdk from "../../../sdk/src/routes/business";
 import {
   Alert,
   ScrollView,
@@ -30,67 +30,6 @@ export default function RegisterAndLogin({
     setPasswordConfirmation("");
   };
 
-  const handleLogin = async () => {
-    // create a user object and pass it to backend
-    const user = { email: email.toLowerCase(), password };
-
-    try {
-      const response = await fetch(backendUrl + "/business/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(user),
-      });
-
-      await response.json().then((data) => {
-        if (data.error) {
-          // if there is an error
-          console.error("An unknown error occurred. Please try again later.");
-          resetFields();
-          return;
-        }
-
-        // check what we got back from the API
-        switch (data.status) {
-          case "loggedIn":
-            // if loggedIn, save the UID to local storage for later use
-            loginUser(data.id);
-            break;
-          case "userNotFound":
-            Alert.alert("Email not registered.");
-            resetFields();
-            break;
-          case "wrongPassword":
-            Alert.alert("Wrong password.");
-            setPassword("");
-            break;
-          default:
-            console.error("An unknown error occurred. Please try again later.");
-            resetFields();
-        }
-      });
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const loginUser = async (uid: any) => {
-    saveSecureData("id", uid.toString());
-
-    try {
-      const response = await fetch(backendUrl + `/business?id=${uid}`);
-
-      await response.json().then((data) => {
-        if (data.firstName === "") {
-          navigation.navigate("AdditionalForm");
-          return;
-        }
-        navigation.navigate("Home");
-      });
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   const handleRegister = async () => {
     // check email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -115,31 +54,72 @@ export default function RegisterAndLogin({
       return;
     }
 
-    // create a user object and pass it to the backend
-    let newUser = { email: email.toLowerCase(), password };
+    const lowercaseEmail = email.toLowerCase();
+    const response = await sdk.registerBusiness(lowercaseEmail, password);
 
-    try {
-      // create a new user in the database
-      const response = await fetch(backendUrl + "/business", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newUser),
-      });
-
-      await response.json().then((data) => {
-        if (data.error && data.error.Code === 19) {
-          // if its this error, the email is already registered
-          Alert.alert("This email is already registered.");
-          resetFields();
-          return;
-        }
-        // save UID to local storage for later use
-        saveSecureData("id", data.id.toString());
-      });
+    if (response.status === 409) {
+      Alert.alert("This email is already registered");
       resetFields();
+      return;
+    }
+
+    if ("error" in response) {
+      console.error(response.error);
+      return;
+    }
+
+    if (response.status === 201) {
+      saveSecureData("business_id", response.json.id.toString());
       navigation.navigate("AdditionalForm");
-    } catch (err) {
-      console.error(err);
+    }
+  };
+
+  const handleLogin = async () => {
+    // create a user object and pass it to backend
+    const lowercaseEmail = email.toLowerCase();
+
+    const response = await sdk.businessLogin(lowercaseEmail, password);
+    if ("error" in response) {
+      console.error(response.error);
+      resetFields();
+      return;
+    }
+
+    if (response.status === 401) {
+      Alert.alert("Wrong password.");
+      setPassword("");
+      return;
+    }
+
+    if (response.status === 404) {
+      Alert.alert("Email not registered.");
+      resetFields();
+      return;
+    }
+
+    if (response.status === 200) {
+      loginUser(response.json.id);
+    }
+  };
+
+  const loginUser = async (uid: any) => {
+    saveSecureData("business_id", uid.toString());
+
+    const response = await sdk.getBusinessById(uid);
+
+    if ("error" in response) {
+      console.error(response.error);
+      return;
+    }
+
+    if (response.json.filled === 0) {
+      // if the customer has not yet filled the additional form
+      navigation.navigate("AdditionalForm");
+      return;
+    }
+
+    if (response.status === 200) {
+      navigation.navigate("Home");
     }
   };
 

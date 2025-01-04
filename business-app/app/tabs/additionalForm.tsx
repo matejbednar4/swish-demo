@@ -1,6 +1,6 @@
 import { backendUrl, getSecureData } from "@/components/global/global";
-import { LinearGradient } from "expo-linear-gradient";
-import { useState } from "react";
+import * as sdk from "../../../sdk/src/routes/business";
+import { useEffect, useState } from "react";
 import {
   Alert,
   ScrollView,
@@ -12,33 +12,43 @@ import {
 } from "react-native";
 
 export default function AdditionalForm({ navigation }: { navigation: any }) {
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [location, setLocation] = useState("");
+  const [name, setName] = useState("");
+  const [address, setAddress] = useState("");
+  const [type, setType] = useState("");
+  const [uid, setUid] = useState("");
 
-  const handleButtonClick = async () => {
-    if (firstName === "" || lastName === "" || location === "") {
+  const fetchData = async () => {
+    try {
+      const response = await getSecureData("business_id");
+      if (response) {
+        setUid(response);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const handleSubmit = async () => {
+    if (name === "" || address === "" || type === "") {
       Alert.alert("You must fill all fields");
       return;
     }
 
-    let id;
-    await getSecureData("id")
-      .then((value) => (id = Number(value)))
-      .catch((err) => console.error(err));
-    const data = { id, firstName, lastName, location };
+    const data = { name, address, type };
+    const response = await sdk.updateBusiness(Number(uid), data);
 
-    await fetch(backendUrl + "/user/info", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    })
-      .then((response) => {
-        if (response.status == 200) {
-          navigation.navigate("Home");
-        }
-      })
-      .catch((err) => console.error(err));
+    if ("error" in response) {
+      console.error(response.error);
+      return;
+    }
+
+    if (response.status === 200) {
+      navigation.navigate("Home");
+    }
   };
 
   return (
@@ -65,31 +75,31 @@ export default function AdditionalForm({ navigation }: { navigation: any }) {
             <View style={styles.formFields}>
               {/* Each form field */}
               <View style={styles.formField}>
-                <Text>Enter your first name</Text>
+                <Text>Enter the name of your business</Text>
                 <TextInput
-                  placeholder="John"
-                  value={firstName}
-                  onChangeText={setFirstName}
+                  placeholder="Swish"
+                  value={name}
+                  onChangeText={setName}
                   style={styles.fieldInput}
                   autoCapitalize="none"
                 />
               </View>
               <View style={styles.formField}>
-                <Text>Enter your last name</Text>
+                <Text>Enter your business' address</Text>
                 <TextInput
-                  placeholder="Smith"
-                  value={lastName}
-                  onChangeText={setLastName}
+                  placeholder="1st St 44, NYC, New York, USA"
+                  value={address}
+                  onChangeText={setAddress}
                   style={styles.fieldInput}
                   autoCapitalize="none"
                 />
               </View>
               <View style={styles.formField}>
-                <Text>Enter the city you live in</Text>
+                <Text>Enter the type of your business</Text>
                 <TextInput
-                  placeholder="Prague"
-                  value={location}
-                  onChangeText={setLocation}
+                  placeholder="Restaurant / Hotel / Gym"
+                  value={type}
+                  onChangeText={setType}
                   style={styles.fieldInput}
                   autoCapitalize="none"
                 />
@@ -97,10 +107,7 @@ export default function AdditionalForm({ navigation }: { navigation: any }) {
               {/* form Button */}
             </View>
           </View>
-          <TouchableOpacity
-            style={styles.formButton}
-            onPress={handleButtonClick}
-          >
+          <TouchableOpacity style={styles.formButton} onPress={handleSubmit}>
             <Text style={{ color: "white", fontWeight: "600" }}>Continue</Text>
           </TouchableOpacity>
         </View>
