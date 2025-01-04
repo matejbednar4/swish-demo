@@ -1,7 +1,7 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
 import { storeData } from "@/components/global/global";
-import { useRouter } from "expo-router";
+import { router, useRouter } from "expo-router";
 import * as sdk from "../../sdk/src/routes/customer";
 import {
   View,
@@ -50,6 +50,7 @@ const Start = ({
   setStart: React.Dispatch<React.SetStateAction<boolean>>;
   setLoginForm: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
+  const router = useRouter();
   return (
     <ScrollView
       contentContainerStyle={{ flex: 1, alignItems: "center" }}
@@ -70,6 +71,7 @@ const Start = ({
           onPress={() => {
             setStart(false);
             setLoginForm(true);
+            router.push("/tabs/app");
           }}
         >
           <Text style={textStyles.startLoginText}>

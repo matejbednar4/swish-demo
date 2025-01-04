@@ -4,6 +4,7 @@ import (
 	"backend/global"
 	"database/sql"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -74,6 +75,44 @@ func GetBusinessById(c *gin.Context, db *sql.DB) {
 	}
 
 	c.JSON(http.StatusOK, business) // Return the business in JSON
+}
+
+func GetRandomBusiness(c *gin.Context, db *sql.DB) {
+	amount := 1
+	queryAmount := c.Query("amount") // get the ?amount= query
+	if queryAmount != "" {
+		// if there is a query
+		num, err := strconv.Atoi(queryAmount)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid query"})
+			return
+		}
+		amount = num
+	}
+
+	rows, err := db.Query("SELECT id, name, address, type, created_at, filled FROM businesses WHERE filled=? ORDER BY RANDOM() LIMIT ?", 1, amount)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Error getting random rows"})
+		return
+	}
+
+	var businesses []Business
+
+	for rows.Next() {
+		var business Business
+		err := rows.Scan(&business.Id, &business.Name, &business.Address, &business.Type, &business.CreatedAt, &business.Filled)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		businesses = append(businesses, business)
+	}
+
+	if err = rows.Err(); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Error iterating over rows"})
+	}
+
+	c.JSON(http.StatusOK, businesses)
 }
 
 func CreateBusiness(c *gin.Context, db *sql.DB) {

@@ -1,36 +1,49 @@
-import { Image, StyleSheet, Text, View } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
-export default function BottomNavigation() {
+export default function BottomNavigation({ navigation }: { navigation: any }) {
+  const goToHome = () => {
+    navigation.navigate("Home");
+  };
+  const goToDiscover = () => {
+    navigation.navigate("Discover");
+  };
+  const goToFavorites = () => {
+    navigation.navigate("Favorites");
+  };
+  const goToAccount = () => {
+    navigation.navigate("Account");
+  };
   return (
     <View style={styles.navigation}>
-      <View style={styles.navItem}>
+      <TouchableOpacity style={styles.navItem} onPress={goToHome}>
         <Image
           source={require("../assets/images/search.png")}
           style={styles.navImage}
         ></Image>
         <Text style={styles.navText}>Search</Text>
-      </View>
-      <View style={styles.navItem}>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.navItem} onPress={goToDiscover}>
         <Image
           source={require("../assets/images/discover.png")}
           style={styles.navImage}
         ></Image>
         <Text style={styles.navText}>Discover</Text>
-      </View>
-      <View style={styles.navItem}>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.navItem} onPress={goToFavorites}>
         <Image
           source={require("../assets/images/favorites.png")}
           style={styles.navImage}
         ></Image>
         <Text style={styles.navText}>Favorites</Text>
-      </View>
-      <View style={styles.navItem}>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.navItem} onPress={goToAccount}>
         <Image
           source={require("../assets/images/account.png")}
           style={styles.navImage}
         ></Image>
         <Text style={styles.navText}>Account</Text>
-      </View>
+      </TouchableOpacity>
     </View>
   );
 }

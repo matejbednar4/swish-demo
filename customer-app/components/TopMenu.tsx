@@ -5,8 +5,14 @@ import { getStoredData } from "./global/global";
 import { emptyCustomer } from "./global/global";
 import { useNavigation } from "@react-navigation/native";
 
-export default function TopMenu() {
-  const navigation = useNavigation;
+export default function TopMenu({
+  title,
+  onBack,
+}: {
+  title: string;
+  onBack?: () => void;
+}) {
+  const navigation: any = useNavigation();
   const [customer, setCustomer] = useState<sdk.Customer>(emptyCustomer);
 
   const getCustomer = async () => {
@@ -19,17 +25,23 @@ export default function TopMenu() {
     getCustomer();
   }, []);
 
+  const goHome = () => {
+    navigation.navigate("Home");
+  };
+
   return (
-    <View style={styles.topMenu}>
+    <View style={styles.menu}>
       <TouchableOpacity
-        style={{ height: "80%", justifyContent: "center" }}
-        onPress={() => navigation.call("Home")}
+        style={{ height: "100%", width: "20%", justifyContent: "center" }}
+        onPress={goHome}
       >
         <Text style={textStyles.heading}>Swish</Text>
       </TouchableOpacity>
       <View style={styles.rightSide}>
         <View style={styles.pfp}>
-          <Text>{customer.firstName}</Text>
+          <Text style={{ fontSize: 10, fontWeight: 500 }}>
+            {customer.firstName}
+          </Text>
         </View>
       </View>
     </View>
@@ -37,28 +49,27 @@ export default function TopMenu() {
 }
 
 const styles = StyleSheet.create({
-  topMenu: {
-    height: "8%",
-    flexDirection: "row",
+  menu: {
+    height: 50,
     backgroundColor: "#f8f9fa",
-    alignItems: "center",
-    position: "fixed",
     borderBottomWidth: 0.5,
     paddingHorizontal: "6%",
     borderColor: "#ced4da",
+    flexDirection: "row",
+    alignItems: "center",
   },
 
   rightSide: {
     height: "80%",
-    width: "83%",
     alignSelf: "center",
     alignItems: "flex-end",
+    flex: 1,
   },
 
   pfp: {
     backgroundColor: "lightgray",
     height: "100%",
-    width: "18%",
+    width: "15%",
     justifyContent: "center",
     alignItems: "center",
     borderRadius: "100%",

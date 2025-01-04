@@ -1,53 +1,83 @@
-import { getStoredData, emptyCustomer } from "@/components/global/global";
-import { useEffect, useState } from "react";
-import * as sdk from "../../../sdk/src/routes/customer";
+import React, { useEffect, useState } from "react";
+import * as customerSdk from "../../../sdk/src/routes/customer";
+import * as businessSdk from "../../../sdk/src/routes/business";
 import {
   Image,
   SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect } from "expo-router";
 
 export default function Discover() {
-  const navigation = useNavigation;
-  const [customer, setCustomer] = useState<sdk.Customer>(emptyCustomer);
+  const [businesses, setBusinesses] = useState<businessSdk.Business[]>();
 
-  const getCustomer = async () => {
-    const response = await getStoredData("customer");
-    if (!response) return;
+  const getBusinesses = async () => {
+    const response = await businessSdk.getRandomBusiness(3);
 
-    setCustomer(JSON.parse(response));
+    if ("error" in response) {
+      console.error("Error fetching random places");
+      return;
+    }
+
+    setBusinesses(response.json);
   };
 
-  useEffect(() => {
-    getCustomer();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      getBusinesses();
+    }, [])
+  );
 
   return (
     <View style={{ flex: 1, backgroundColor: "#f8f9fa" }}>
       <SafeAreaView style={{ flex: 1 }}>
-        <ScrollView
-          style={{ backgroundColor: "#ffffff" }}
-          contentContainerStyle={styles.scrollView}
-        >
-          <TouchableOpacity onPress={() => navigation.navigate("Home")}>
-            <Text>Swish</Text>
+        <View style={{ ...styles.mainView }}>
+          <TouchableOpacity>
+            <Text>Ahoj</Text>
           </TouchableOpacity>
-        </ScrollView>
+          {businesses ? (
+            businesses.map((business, index) => (
+              <View key={index} style={styles.business}>
+                <Text>{business.name || "Unnamed Business"}</Text>
+                <Text style={{}}>
+                  Address: {business.address || "No Address Available"}
+                </Text>
+                <Text style={{}}>
+                  Type: {business.type || "No Type Available"}
+                </Text>
+              </View>
+            ))
+          ) : (
+            <Text>No businesses available</Text>
+          )}
+        </View>
       </SafeAreaView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollView: {
+  mainView: {
+    height: "100%",
+    width: "100%",
     alignItems: "center",
+    justifyContent: "center",
     paddingHorizontal: "6%",
     paddingVertical: "8%",
+    backgroundColor: "#ffffff",
+    flexDirection: "column",
+    gap: "8%",
+  },
+
+  business: {
+    flex: 1,
+    width: "100%",
+    borderColor: "#ced4da",
+    borderWidth: 1,
+    borderRadius: 8,
   },
 });

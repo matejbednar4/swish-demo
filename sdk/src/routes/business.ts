@@ -2,10 +2,12 @@ import { backendUrl, endpoints } from "../global";
 export {
   getBusinesses,
   getBusinessById,
+  getRandomBusiness,
   registerBusiness,
   businessLogin,
   deleteBusiness,
   updateBusiness,
+  Business,
 };
 
 interface Business {
@@ -39,6 +41,21 @@ const getBusinessById = async function (
 ): Promise<ApiResponse<Business>> {
   try {
     const response = await fetch(backendUrl + endpoints.business + `?id=${id}`);
+    const json = await response.json();
+    return { status: response.status, json };
+  } catch (err) {
+    console.error(err);
+    return { status: 500, error: "Network error" };
+  }
+};
+
+const getRandomBusiness = async function (
+  amount: Number
+): Promise<ApiResponse<Business[]>> {
+  try {
+    const response = await fetch(
+      backendUrl + endpoints.business + `/random?amount=${amount}`
+    );
     const json = await response.json();
     return { status: response.status, json };
   } catch (err) {

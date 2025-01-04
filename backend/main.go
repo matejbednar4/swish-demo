@@ -33,6 +33,7 @@ func main() {
 	// Business accounts
 	router.GET("/businesses", func(c *gin.Context) { businesses.GetBusinesses(c, db) })
 	router.GET("/business", func(c *gin.Context) { businesses.GetBusinessById(c, db) })
+	router.GET("/business/random", func(c *gin.Context) { businesses.GetRandomBusiness(c, db) })
 	router.POST("/business", func(c *gin.Context) { businesses.CreateBusiness(c, db) })
 	router.POST("/business/login", func(c *gin.Context) { businesses.BusinessLogin(c, db) })
 	router.DELETE("/business", func(c *gin.Context) { businesses.DeleteBusinessById(c, db) })

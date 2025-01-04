@@ -6,8 +6,10 @@ import Discover from "./discover";
 import BottomNavigation from "@/components/BottomNavigation";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 
 const Stack = createNativeStackNavigator();
+const Tab = createBottomTabNavigator();
 
 export default function App() {
   return (
@@ -15,13 +17,23 @@ export default function App() {
       style={{ ...StyleSheet.absoluteFillObject, backgroundColor: "#f8f9fa" }}
     >
       <SafeAreaView style={{ flex: 1 }}>
-        <TopMenu />
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="Discover" component={Discover} />
-          <Stack.Screen name="Home" component={Home} />
-          <Stack.Screen name="TopMenu" component={TopMenu} />
-        </Stack.Navigator>
-        <BottomNavigation />
+        {/* <TopMenu /> */}
+        <Tab.Navigator
+          screenOptions={{
+            header: ({ navigation, route }) => (
+              <TopMenu
+                title={route.name}
+                onBack={navigation.canGoBack() ? navigation.goBack : undefined}
+              />
+            ),
+          }}
+          tabBar={({ navigation }) => (
+            <BottomNavigation navigation={navigation} />
+          )}
+        >
+          <Tab.Screen name="Discover" component={Discover} />
+          <Tab.Screen name="Home" component={Home} />
+        </Tab.Navigator>
       </SafeAreaView>
     </View>
   );

@@ -3,7 +3,6 @@ import {
   getStoredData,
   emptyCustomer,
 } from "@/components/global/global";
-import { StackNavigationProp } from "@react-navigation/stack";
 import { useEffect, useState } from "react";
 import * as sdk from "../../../sdk/src/routes/customer";
 import {
