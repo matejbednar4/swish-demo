@@ -1,5 +1,5 @@
 import { saveSecureData } from "@/components/global/global";
-import * as sdk from "../../../sdk/src/routes/customer.js";
+import * as sdk from "../../../sdk/src/routes/customer";
 import { useState } from "react";
 import {
   Alert,
@@ -30,55 +30,6 @@ export default function RegisterAndLogin({
     setPasswordConfirmation("");
   };
 
-  const handleLogin = async () => {
-    // create a user object and pass it to backend
-    const lowercaseEmail = email.toLowerCase();
-
-    const response = await sdk.customerLogin(lowercaseEmail, password);
-    if (response.status === 401) {
-      Alert.alert("Wrong password.");
-      setPassword("");
-      return;
-    }
-
-    if (response.status === 404) {
-      Alert.alert("Email not registered.");
-      resetFields();
-      return;
-    }
-
-    if (response.json.error) {
-      console.error(response.json.error);
-      resetFields();
-      return;
-    }
-
-    if (response.status === 200) {
-      loginUser(response.json.id);
-    }
-  };
-
-  const loginUser = async (uid: any) => {
-    saveSecureData("id", uid.toString());
-
-    const response = await sdk.getCustomerById(uid);
-
-    if (response.json.error) {
-      console.error(response.json.error);
-      return;
-    }
-
-    if (response.json.firstName === "") {
-      // if the customer has not yet filled the additional form
-      navigation.navigate("AdditionalForm");
-      return;
-    }
-
-    if (response.status === 200) {
-      navigation.navigate("Home");
-    }
-  };
-
   const handleRegister = async () => {
     // check email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -103,10 +54,14 @@ export default function RegisterAndLogin({
       return;
     }
 
-    // create a user object and pass it to the backend
     const lowercaseEmail = email.toLowerCase();
 
-    const response = await sdk.createCustomer(lowercaseEmail, password);
+    const response = await sdk.registerCustomer(lowercaseEmail, password);
+
+    if ("error" in response) {
+      console.error(response.error);
+      return;
+    }
 
     if (response.status === 409) {
       Alert.alert("This email is already registered.");
@@ -114,14 +69,62 @@ export default function RegisterAndLogin({
       return;
     }
 
-    if (response.json.error) {
-      console.error(response.json.error);
+    if (response.status === 201) {
+      saveSecureData("customer_id", response.json.id.toString());
+      navigation.navigate("AdditionalForm");
+    }
+  };
+
+  const handleLogin = async () => {
+    // create a user object and pass it to backend
+    const lowercaseEmail = email.toLowerCase();
+
+    const response = await sdk.customerLogin(lowercaseEmail, password);
+    if ("error" in response) {
+      console.error(response.error);
+      resetFields();
       return;
     }
 
-    if (response.status === 201) {
-      saveSecureData("id", response.json.id.toString());
+    if (response.status === 401) {
+      Alert.alert("Wrong password.");
+      setPassword("");
+      return;
+    }
+
+    if (response.status === 404) {
+      Alert.alert("Email not registered.");
+      resetFields();
+      return;
+    }
+
+    if (response.status === 200) {
+      loginUser(response.json.id);
+    }
+  };
+
+  const loginUser = async (uid: any) => {
+    saveSecureData("customer_id", uid.toString());
+
+    const response = await sdk.getCustomerById(uid);
+
+    if ("error" in response) {
+      console.error(response.error);
+      return;
+    }
+
+    if (
+      response.json.firstName === "" ||
+      response.json.lastName === "" ||
+      response.json.address === ""
+    ) {
+      // if the customer has not yet filled the additional form
       navigation.navigate("AdditionalForm");
+      return;
+    }
+
+    if (response.status === 200) {
+      navigation.navigate("Home");
     }
   };
 

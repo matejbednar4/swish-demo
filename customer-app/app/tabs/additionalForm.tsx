@@ -1,5 +1,5 @@
 import { getSecureData } from "@/components/global/global";
-import * as sdk from "../../../sdk/src/routes/customer.js";
+import * as sdk from "../../../sdk/src/routes/customer";
 import { useEffect, useState } from "react";
 import {
   Alert,
@@ -14,13 +14,15 @@ import {
 export default function AdditionalForm({ navigation }: { navigation: any }) {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [location, setLocation] = useState("");
-  const [uid, setUid] = useState<string | null>(null);
+  const [address, setAddress] = useState("");
+  const [uid, setUid] = useState("");
 
   const fetchData = async () => {
     try {
-      const response = await getSecureData("id");
-      setUid(response || null);
+      const response = await getSecureData("customer_id");
+      if (response) {
+        setUid(response);
+      }
     } catch (err) {
       console.error(err);
     }
@@ -31,16 +33,16 @@ export default function AdditionalForm({ navigation }: { navigation: any }) {
   }, []);
 
   const handleSubmit = async () => {
-    if (firstName === "" || lastName === "" || location === "") {
+    if (firstName === "" || lastName === "" || address === "") {
       Alert.alert("You must fill all of the fields");
       return;
     }
 
-    const data = { firstName, lastName, location };
-    const response = await sdk.updateCustomer(uid, data);
+    const data = { firstName, lastName, address };
+    const response = await sdk.updateCustomer(Number(uid), data);
 
-    if (response.json.error) {
-      console.error(response.json.error);
+    if ("error" in response) {
+      console.error(response.error);
       return;
     }
 
@@ -93,11 +95,11 @@ export default function AdditionalForm({ navigation }: { navigation: any }) {
                 />
               </View>
               <View style={styles.formField}>
-                <Text>Enter the city you live in</Text>
+                <Text>Enter your Address</Text>
                 <TextInput
-                  placeholder="Prague"
-                  value={location}
-                  onChangeText={setLocation}
+                  placeholder="1st St 44, NYC, New York, USA"
+                  value={address}
+                  onChangeText={setAddress}
                   style={styles.fieldInput}
                   autoCapitalize="none"
                 />

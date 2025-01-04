@@ -1,4 +1,7 @@
+import BottomNavigation from "@/components/BottomNavigation";
 import { getSecureData } from "@/components/global/global";
+import TopMenu from "@/components/TopMenu";
+import { useEffect, useState } from "react";
 import {
   Image,
   SafeAreaView,
@@ -10,228 +13,166 @@ import {
   View,
 } from "react-native";
 
-export default function Home() {
-  let uid;
-  getSecureData("id")
-    .then((data) => (uid = data))
-    .catch((err) => console.error(err));
+export default function Home({ navigation }: { navigation: any }) {
+  const [uid, setUid] = useState("");
+
+  const fetchData = async () => {
+    try {
+      const response = await getSecureData("customer_id");
+      if (response) {
+        setUid(response);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   return (
     <View style={{ flex: 1, backgroundColor: "#f8f9fa" }}>
       <SafeAreaView style={{ flex: 1 }}>
-        <View style={styles.topMenu}>
-          <Text style={{ fontWeight: "bold", fontSize: 20 }}>Swish</Text>
-          <View
-            style={{
-              height: "80%",
-              width: "83%",
-              alignSelf: "center",
-              alignItems: "flex-end",
-            }}
-          >
-            <View
-              style={{
-                backgroundColor: "lightgray",
-                height: "100%",
-                width: "20%",
-              }}
-            >
-              <Text>pfp</Text>
-            </View>
-          </View>
-        </View>
+        <TopMenu uid={uid} />
         <ScrollView
-          style={{ backgroundColor: "white" }}
-          contentContainerStyle={{
-            alignItems: "center",
-            paddingHorizontal: "6%",
-            paddingVertical: "8%",
-          }}
+          style={{ backgroundColor: "#ffffff" }}
+          contentContainerStyle={styles.scrollView}
         >
-          <Text
-            style={{
-              alignSelf: "flex-start",
-              marginBottom: "2%",
-              fontWeight: "bold",
-            }}
-          >
-            Search for a place
-          </Text>
-          {/* Search box */}
-          <View
-            style={{
-              backgroundColor: "#f8f9fa",
-              width: "100%",
-              height: "130%",
-              borderWidth: 1,
-              borderRadius: 8,
-              borderBottomRightRadius: 4,
-              borderBottomLeftRadius: 4,
-              borderColor: "#ced4da",
-              paddingHorizontal: "4%",
-              justifyContent: "center",
-            }}
-          >
-            <View
-              style={[
-                styles.searchField,
-                { borderBottomWidth: 1, borderColor: "#ced4da" },
-              ]}
-            >
-              <Image
-                source={require("../../assets/images/store.png")}
-                style={{
-                  width: "8%",
-                  height: "50%",
-                  resizeMode: "contain",
-                }}
-              ></Image>
-              <TextInput
-                placeholder="Business name"
-                style={{
-                  marginLeft: "2.5%",
-                  width: "90%",
-                  height: "90%",
-                }}
-                autoCapitalize="none"
-              ></TextInput>
-            </View>
-            <View
-              style={[
-                styles.searchField,
-                { borderBottomWidth: 1, borderColor: "#ced4da" },
-              ]}
-            >
-              <Image
-                source={require("../../assets/images/location-pin.png")}
-                style={{
-                  width: "8%",
-                  height: "60%",
-                  resizeMode: "contain",
-                }}
-              ></Image>
-              <TextInput
-                placeholder="Location"
-                style={{
-                  marginLeft: "2.5%",
-                  width: "90%",
-                  height: "90%",
-                }}
-                autoCapitalize="none"
-              ></TextInput>
-            </View>
-            <View style={styles.searchField}>
-              <Image
-                source={require("../../assets/images/restaurant.png")}
-                style={{
-                  width: "8%",
-                  height: "55%",
-                  resizeMode: "contain",
-                }}
-              ></Image>
-              <TextInput
-                placeholder="Business Type"
-                style={{
-                  marginLeft: "2.5%",
-                  width: "90%",
-                  height: "90%",
-                }}
-                autoCapitalize="none"
-              ></TextInput>
-            </View>
-          </View>
-          {/* Search button */}
           <TouchableOpacity
             style={{
               width: "100%",
-              alignItems: "center",
-              marginTop: "2%",
               backgroundColor: "#70e000",
+              justifyContent: "center",
+              alignItems: "center",
               borderRadius: 8,
-              borderTopRightRadius: 4,
-              borderTopLeftRadius: 4,
               paddingVertical: "2.5%",
+              marginBottom: "8%",
             }}
           >
-            <Text style={{ fontWeight: "bold", color: "white" }}>Search</Text>
+            <Text style={{ fontWeight: "bold", color: "white" }}>
+              Find me a place
+            </Text>
           </TouchableOpacity>
+          <Search />
         </ScrollView>
-        <View style={styles.navigation}>
-          <View style={styles.navItem}>
-            <Image
-              source={require("../../assets/images/search.png")}
-              style={styles.navImage}
-            ></Image>
-            <Text style={styles.navText}>Search</Text>
-          </View>
-          <View style={styles.navItem}>
-            <Image
-              source={require("../../assets/images/discover.png")}
-              style={styles.navImage}
-            ></Image>
-            <Text style={styles.navText}>Discover</Text>
-          </View>
-          <View style={styles.navItem}>
-            <Image
-              source={require("../../assets/images/favorites.png")}
-              style={styles.navImage}
-            ></Image>
-            <Text style={styles.navText}>Favorites</Text>
-          </View>
-          <View style={styles.navItem}>
-            <Image
-              source={require("../../assets/images/account.png")}
-              style={styles.navImage}
-            ></Image>
-            <Text style={styles.navText}>Account</Text>
-          </View>
-        </View>
+        <BottomNavigation />
       </SafeAreaView>
     </View>
   );
 }
 
+const Search = () => {
+  return (
+    <View style={{ width: "100%" }}>
+      <Text style={textStyles.sectionHeading}>Search for a place</Text>
+      {/* Search box */}
+      <View style={searchStyles.box}>
+        <View style={[searchStyles.field, { borderBottomWidth: 1 }]}>
+          <Image
+            source={require("../../assets/images/store.png")}
+            style={searchStyles.icon}
+          ></Image>
+          <TextInput
+            placeholder="Business name"
+            style={searchStyles.textInput}
+            autoCapitalize="none"
+          ></TextInput>
+        </View>
+        <View style={[searchStyles.field, { borderBottomWidth: 1 }]}>
+          <Image
+            source={require("../../assets/images/location-pin.png")}
+            style={searchStyles.icon}
+          ></Image>
+          <TextInput
+            placeholder="Location"
+            style={searchStyles.textInput}
+            autoCapitalize="none"
+          ></TextInput>
+        </View>
+        <View style={searchStyles.field}>
+          <Image
+            source={require("../../assets/images/restaurant.png")}
+            style={searchStyles.icon}
+          ></Image>
+          <TextInput
+            placeholder="Business Type"
+            style={searchStyles.textInput}
+            autoCapitalize="none"
+          ></TextInput>
+        </View>
+      </View>
+      {/* Search button */}
+      <TouchableOpacity style={searchStyles.button}>
+        <Text style={textStyles.button}>Search</Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
+
 const styles = StyleSheet.create({
-  topMenu: {
-    height: "8%",
-    flexDirection: "row",
-    backgroundColor: "#f8f9fa",
+  scrollView: {
     alignItems: "center",
-    position: "fixed",
-    borderBottomWidth: 0.5,
     paddingHorizontal: "6%",
-    borderColor: "#ced4da",
+    paddingVertical: "8%",
   },
-  searchField: {
-    flexDirection: "row",
-    height: "33%",
+});
+
+const searchStyles = StyleSheet.create({
+  box: {
     backgroundColor: "#f8f9fa",
+    width: "100%",
+    borderWidth: 1,
+    borderRadius: 8,
+    borderBottomRightRadius: 4,
+    borderBottomLeftRadius: 4,
+    borderColor: "#ced4da",
+    paddingHorizontal: "4%",
     justifyContent: "center",
-    alignItems: "center",
   },
-  navigation: {
-    height: "8%",
-    paddingTop: "4%",
+
+  field: {
     flexDirection: "row",
-    backgroundColor: "#f8f9fa",
-    position: "fixed",
-    borderTopWidth: 0.5,
-    borderColor: "#ced4da",
-    paddingHorizontal: "6%",
-    alignItems: "center",
-  },
-  navItem: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    borderColor: "#ced4da",
+    paddingVertical: "5.5%",
   },
-  navImage: {
-    width: "100%",
-    height: "55%",
+
+  icon: {
+    width: "8%",
+    height: "100%",
     resizeMode: "contain",
-    marginBottom: "8%",
   },
-  navText: {
-    fontWeight: "500",
+
+  textInput: {
+    marginLeft: "2.5%",
+    width: "90%",
+    height: "250%",
+  },
+
+  button: {
+    width: "100%",
+    alignItems: "center",
+    marginTop: "2%",
+    backgroundColor: "#70e000",
+    borderRadius: 8,
+    borderTopRightRadius: 4,
+    borderTopLeftRadius: 4,
+    paddingVertical: "2.5%",
+  },
+});
+
+const textStyles = StyleSheet.create({
+  sectionHeading: {
+    alignSelf: "flex-start",
+    marginBottom: "2%",
+    fontWeight: "bold",
+  },
+
+  button: {
+    fontWeight: "bold",
+    color: "white",
   },
 });
