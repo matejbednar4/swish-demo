@@ -6,7 +6,7 @@ export {
   customerLogin,
   deleteCustomer,
   updateCustomer,
-  Customer
+  Customer,
 };
 
 interface Customer {
@@ -17,6 +17,7 @@ interface Customer {
   lastName: string;
   address: string;
   score: number;
+  balance: number;
   createdAt: Date;
   filled: number;
 }

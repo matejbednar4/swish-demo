@@ -1,6 +1,6 @@
 import { LinearGradient } from "expo-linear-gradient";
-import { useState } from "react";
-import { storeData } from "@/components/global/global";
+import { useEffect, useState } from "react";
+import { getStoredData, storeData } from "@/components/global/global";
 import { router, useRouter } from "expo-router";
 import * as sdk from "../../sdk/src/routes/customer";
 import {
@@ -11,6 +11,7 @@ import {
   StyleSheet,
   TextInput,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 
 export default function Index() {
@@ -18,6 +19,64 @@ export default function Index() {
   const [loginForm, setLoginForm] = useState(true);
   const [firstForm, setFirstForm] = useState(true);
   const [uid, setUid] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const checkIfSignedIn = async () => {
+    const response = await getStoredData("customer");
+    // If there is no customer stored locally
+    if (!response || response === "") {
+      setIsLoading(false);
+      return;
+    }
+
+    const customer: sdk.Customer = JSON.parse(response);
+    // Check if the customer also exists in the backend
+    const backendResponse = await sdk.getCustomerById(customer.id);
+    if ("error" in backendResponse) {
+      setIsLoading(false);
+      return;
+    }
+    if (backendResponse.status !== 200) {
+      setIsLoading(false);
+      return;
+    }
+    // Check if the customer in the backend is the same as the customer in storedData
+    if (backendResponse.json.email !== customer.email) {
+      setIsLoading(false);
+      return;
+    }
+
+    if (backendResponse.json.filled === 0) {
+      setIsLoading(false);
+      setUid(customer.id);
+      setStart(false);
+      setFirstForm(false);
+    }
+
+    if (backendResponse.json.filled === 1) {
+      setIsLoading(false);
+      router.push("/tabs/app");
+    }
+  };
+
+  useEffect(() => {
+    checkIfSignedIn();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: "white",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <ActivityIndicator />
+      </View>
+    );
+  }
 
   return (
     <View style={{ ...StyleSheet.absoluteFillObject }}>
@@ -71,7 +130,6 @@ const Start = ({
           onPress={() => {
             setStart(false);
             setLoginForm(true);
-            router.push("/tabs/app");
           }}
         >
           <Text style={textStyles.startLoginText}>

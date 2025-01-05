@@ -26,6 +26,10 @@ export default function Home({ navigation }: { navigation: any }) {
     setCustomer(JSON.parse(response));
   };
 
+  const goToDiscover = () => {
+    navigation.navigate("Discover");
+  };
+
   useEffect(() => {
     getCustomer();
   }, []);
@@ -38,24 +42,13 @@ export default function Home({ navigation }: { navigation: any }) {
           style={{ backgroundColor: "#ffffff" }}
           contentContainerStyle={styles.scrollView}
         >
-          <TouchableOpacity
-            style={{
-              width: "100%",
-              backgroundColor: "#70e000",
-              justifyContent: "center",
-              alignItems: "center",
-              borderRadius: 8,
-              paddingVertical: "2.5%",
-              marginBottom: "8%",
-            }}
-          >
+          <TouchableOpacity style={styles.findMeAplace} onPress={goToDiscover}>
             <Text style={{ fontWeight: "bold", color: "white" }}>
               Find me a place
             </Text>
           </TouchableOpacity>
           <Search />
         </ScrollView>
-        {/* <BottomNavigation /> */}
       </SafeAreaView>
     </View>
   );
@@ -114,6 +107,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: "6%",
     paddingVertical: "8%",
+  },
+  findMeAplace: {
+    width: "100%",
+    backgroundColor: "#70e000",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 8,
+    paddingVertical: "2.5%",
+    marginBottom: "8%",
   },
 });
 

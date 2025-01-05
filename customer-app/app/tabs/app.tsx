@@ -6,7 +6,12 @@ import Discover from "./discover";
 import BottomNavigation from "@/components/BottomNavigation";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import {
+  BottomTabBarProps,
+  createBottomTabNavigator,
+} from "@react-navigation/bottom-tabs";
+import Account from "./account";
+import Favorites from "./favorites";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -19,20 +24,25 @@ export default function App() {
       <SafeAreaView style={{ flex: 1 }}>
         {/* <TopMenu /> */}
         <Tab.Navigator
-          screenOptions={{
-            header: ({ navigation, route }) => (
+          screenOptions={({ route }) => ({
+            header: ({ navigation }) => (
               <TopMenu
                 title={route.name}
                 onBack={navigation.canGoBack() ? navigation.goBack : undefined}
               />
             ),
+          })}
+          tabBar={({ navigation }) => {
+            const route =
+              navigation.getState().routes[navigation.getState().index];
+
+            return <BottomNavigation route={route} navigation={navigation} />;
           }}
-          tabBar={({ navigation }) => (
-            <BottomNavigation navigation={navigation} />
-          )}
         >
-          <Tab.Screen name="Discover" component={Discover} />
           <Tab.Screen name="Home" component={Home} />
+          <Tab.Screen name="Discover" component={Discover} />
+          <Tab.Screen name="Favorites" component={Favorites} />
+          <Tab.Screen name="Account" component={Account} />
         </Tab.Navigator>
       </SafeAreaView>
     </View>

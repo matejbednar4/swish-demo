@@ -22,6 +22,7 @@ type Customer struct {
 	Score     int       `json:"score"`
 	CreatedAt time.Time `json:"createdAt"`
 	Filled    int       `json:"filled"`
+	Balance   int       `json:"balance"`
 }
 
 func GetCustomers(c *gin.Context, db *sql.DB) {

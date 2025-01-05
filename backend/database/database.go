@@ -29,6 +29,7 @@ func createCustomersTable(db *sql.DB) {
 		last_name VARCHAR(30),
 		address VARCHAR(255),
 		score INTEGER NOT NULL DEFAULT 5,
+		balance INTEGER NOT NULL DEFAULT 0,
 		created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 		filled INTEGER NOT NULL DEFAULT 0
 		);
