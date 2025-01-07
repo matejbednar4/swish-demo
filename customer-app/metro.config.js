@@ -11,16 +11,13 @@ config.watchFolders = [
   path.resolve(__dirname, "../sdk"), // Adjust this path if needed
 ];
 
-// Add transformer configuration for handling SVGs
-config.transformer = {
-  ...config.transformer,
-  babelTransformerPath: require.resolve("react-native-svg-transformer"),
-};
-
 // Add file extensions for SVGs
 config.resolver = {
   ...config.resolver,
   assetExts: [...config.resolver.assetExts, "svg"], // Add 'svg' to asset extensions
+  alias: {
+    "@": path.resolve(__dirname, "./"),
+  },
 };
 
 module.exports = config;

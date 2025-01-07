@@ -1,11 +1,4 @@
 import {
-  storeData,
-  getStoredData,
-  emptyCustomer,
-} from "@/components/global/global";
-import { useEffect, useState } from "react";
-import * as sdk from "../../../sdk/src/routes/customer";
-import {
   Image,
   SafeAreaView,
   ScrollView,
@@ -15,35 +8,24 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { BusinessName, BusinessType, LocationPin } from "@/components/Svg";
+import { colors } from "@/constants/Colors";
 
 export default function Home({ navigation }: { navigation: any }) {
-  const [customer, setCustomer] = useState<sdk.Customer>(emptyCustomer);
-
-  const getCustomer = async () => {
-    const response = await getStoredData("customer");
-    if (!response) return;
-
-    setCustomer(JSON.parse(response));
-  };
-
   const goToDiscover = () => {
     navigation.navigate("Discover");
   };
 
-  useEffect(() => {
-    getCustomer();
-  }, []);
-
   return (
-    <View style={{ flex: 1, backgroundColor: "#f8f9fa" }}>
+    <View style={{ flex: 1 }}>
       <SafeAreaView style={{ flex: 1 }}>
         {/* <TopMenu navigation={navigation} /> */}
         <ScrollView
-          style={{ backgroundColor: "#ffffff" }}
+          style={{ backgroundColor: colors.background }}
           contentContainerStyle={styles.scrollView}
         >
           <TouchableOpacity style={styles.findMeAplace} onPress={goToDiscover}>
-            <Text style={{ fontWeight: "bold", color: "white" }}>
+            <Text style={{ fontWeight: "bold", color: colors.background }}>
               Find me a place
             </Text>
           </TouchableOpacity>
@@ -61,34 +43,40 @@ const Search = () => {
       {/* Search box */}
       <View style={searchStyles.box}>
         <View style={[searchStyles.field, { borderBottomWidth: 1 }]}>
-          <Image
-            source={require("../../assets/images/store.png")}
+          <BusinessName
             style={searchStyles.icon}
-          ></Image>
+            height={"120%"}
+            fill={colors.black}
+          />
           <TextInput
             placeholder="Business name"
+            placeholderTextColor={colors.placeholder}
             style={searchStyles.textInput}
             autoCapitalize="none"
           ></TextInput>
         </View>
         <View style={[searchStyles.field, { borderBottomWidth: 1 }]}>
-          <Image
-            source={require("../../assets/images/location-pin.png")}
+          <LocationPin
             style={searchStyles.icon}
-          ></Image>
+            height={"130%"}
+            fill={colors.black}
+          />
           <TextInput
             placeholder="Location"
+            placeholderTextColor={colors.placeholder}
             style={searchStyles.textInput}
             autoCapitalize="none"
           ></TextInput>
         </View>
         <View style={searchStyles.field}>
-          <Image
-            source={require("../../assets/images/restaurant.png")}
+          <BusinessType
             style={searchStyles.icon}
-          ></Image>
+            height={"150%"}
+            fill={colors.black}
+          />
           <TextInput
             placeholder="Business Type"
+            placeholderTextColor={colors.placeholder}
             style={searchStyles.textInput}
             autoCapitalize="none"
           ></TextInput>
@@ -108,9 +96,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: "6%",
     paddingVertical: "8%",
   },
+
   findMeAplace: {
     width: "100%",
-    backgroundColor: "#70e000",
+    backgroundColor: colors.green,
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 8,
@@ -121,13 +110,13 @@ const styles = StyleSheet.create({
 
 const searchStyles = StyleSheet.create({
   box: {
-    backgroundColor: "#f8f9fa",
+    backgroundColor: colors.darkerBackground,
     width: "100%",
     borderWidth: 1,
     borderRadius: 8,
     borderBottomRightRadius: 4,
     borderBottomLeftRadius: 4,
-    borderColor: "#ced4da",
+    borderColor: colors.grayOutline,
     paddingHorizontal: "4%",
     justifyContent: "center",
   },
@@ -137,14 +126,12 @@ const searchStyles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    borderColor: "#ced4da",
+    borderColor: colors.grayOutline,
     paddingVertical: "5.5%",
   },
 
   icon: {
-    width: "8%",
-    height: "100%",
-    resizeMode: "contain",
+    width: "10%",
   },
 
   textInput: {
@@ -157,7 +144,7 @@ const searchStyles = StyleSheet.create({
     width: "100%",
     alignItems: "center",
     marginTop: "2%",
-    backgroundColor: "#70e000",
+    backgroundColor: colors.green,
     borderRadius: 8,
     borderTopRightRadius: 4,
     borderTopLeftRadius: 4,
@@ -170,10 +157,11 @@ const textStyles = StyleSheet.create({
     alignSelf: "flex-start",
     marginBottom: "2%",
     fontWeight: "bold",
+    color: colors.black,
   },
 
   button: {
     fontWeight: "bold",
-    color: "white",
+    color: colors.background,
   },
 });

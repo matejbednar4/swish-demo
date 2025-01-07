@@ -1,16 +1,6 @@
 import { backendUrl, endpoints } from "../global";
-export {
-  getBusinesses,
-  getBusinessById,
-  getRandomBusiness,
-  registerBusiness,
-  businessLogin,
-  deleteBusiness,
-  updateBusiness,
-  Business,
-};
 
-interface Business {
+export interface Business {
   id: number;
   email: string;
   password: string;
@@ -21,14 +11,30 @@ interface Business {
   filled: number;
 }
 
+export interface BusinessType {
+  id: number;
+  name: string;
+}
+
 type ApiResponse<T> =
   | { status: number; json: T }
   | { status: number; error: string };
 
-const getBusinesses = async function (): Promise<ApiResponse<Business[]>> {
+type ApiErrorResponse<T> =
+  | { status: number; json: T }
+  | { status: number; error: unknown };
+
+export const getBusinesses = async function (): Promise<
+  ApiResponse<Business[]>
+> {
   try {
     const response = await fetch(backendUrl + endpoints.businesses);
     const json = await response.json();
+
+    if ("error" in json) {
+      return { status: response.status, error: json };
+    }
+
     return { status: response.status, json };
   } catch (err) {
     console.error(err);
@@ -36,12 +42,17 @@ const getBusinesses = async function (): Promise<ApiResponse<Business[]>> {
   }
 };
 
-const getBusinessById = async function (
+export const getBusinessById = async function (
   id: number
 ): Promise<ApiResponse<Business>> {
   try {
     const response = await fetch(backendUrl + endpoints.business + `?id=${id}`);
     const json = await response.json();
+
+    if ("error" in json) {
+      return { status: response.status, error: json };
+    }
+
     return { status: response.status, json };
   } catch (err) {
     console.error(err);
@@ -49,14 +60,42 @@ const getBusinessById = async function (
   }
 };
 
-const getRandomBusiness = async function (
-  amount: Number
-): Promise<ApiResponse<Business[]>> {
+export const getRandomBusiness = async function (
+  amount: Number,
+  type: String = "any"
+): Promise<ApiErrorResponse<Business[]>> {
   try {
     const response = await fetch(
-      backendUrl + endpoints.business + `/random?amount=${amount}`
+      backendUrl + endpoints.randomBusiness + `?amount=${amount}&type=${type}`
     );
     const json = await response.json();
+
+    if (json === null) {
+      return { status: 404, error: "User not found" };
+    }
+
+    if ("error" in json) {
+      return { status: response.status, error: json.error };
+    }
+
+    return { status: response.status, json };
+  } catch (err) {
+    console.error(err);
+    return { status: 500, error: err };
+  }
+};
+
+export const getBusinessTypes = async (): Promise<
+  ApiResponse<BusinessType[]>
+> => {
+  try {
+    const response = await fetch(backendUrl + endpoints.businessTypes);
+    const json = await response.json();
+
+    if ("error" in json) {
+      return { status: response.status, error: json };
+    }
+
     return { status: response.status, json };
   } catch (err) {
     console.error(err);
@@ -64,7 +103,7 @@ const getRandomBusiness = async function (
   }
 };
 
-const registerBusiness = async function (
+export const registerBusiness = async function (
   email: string,
   password: string
 ): Promise<ApiResponse<{ id: number }>> {
@@ -76,6 +115,11 @@ const registerBusiness = async function (
       body: JSON.stringify(business),
     });
     const json = await response.json();
+
+    if ("error" in json) {
+      return { status: response.status, error: json };
+    }
+
     return { status: response.status, json };
   } catch (err) {
     console.error(err);
@@ -83,7 +127,7 @@ const registerBusiness = async function (
   }
 };
 
-const businessLogin = async function (
+export const businessLogin = async function (
   email: string,
   password: string
 ): Promise<ApiResponse<{ id: number }>> {
@@ -95,6 +139,11 @@ const businessLogin = async function (
       body: JSON.stringify(user),
     });
     const json = await response.json();
+
+    if ("error" in json) {
+      return { status: response.status, error: json };
+    }
+
     return { status: response.status, json };
   } catch (err) {
     console.error(err);
@@ -102,7 +151,7 @@ const businessLogin = async function (
   }
 };
 
-const deleteBusiness = async function (
+export const deleteBusiness = async function (
   id: number
 ): Promise<ApiResponse<{ message: string }>> {
   try {
@@ -113,6 +162,11 @@ const deleteBusiness = async function (
       }
     );
     const json = await response.json();
+
+    if ("error" in json) {
+      return { status: response.status, error: json };
+    }
+
     return { status: response.status, json };
   } catch (err) {
     console.error(err);
@@ -120,7 +174,7 @@ const deleteBusiness = async function (
   }
 };
 
-const updateBusiness = async function (
+export const updateBusiness = async function (
   id: number,
   data: { name: string; address: string; type: string }
 ): Promise<ApiResponse<{ message: string }>> {
@@ -135,6 +189,11 @@ const updateBusiness = async function (
     );
 
     const json = await response.json();
+
+    if ("error" in json) {
+      return { status: response.status, error: json };
+    }
+
     return { status: response.status, json };
   } catch (err) {
     console.error(err);

@@ -2,7 +2,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useState } from "react";
 import { getStoredData, storeData } from "@/components/global/global";
 import { router, useRouter } from "expo-router";
-import * as sdk from "../../sdk/src/routes/customer";
+import * as customerSdk from "../../sdk/src/routes/customer";
 import {
   View,
   Text,
@@ -12,7 +12,10 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
+  Image,
 } from "react-native";
+import { colors } from "@/constants/Colors";
+import * as ImagePicker from "expo-image-picker";
 
 export default function Index() {
   const [start, setStart] = useState(true);
@@ -29,9 +32,9 @@ export default function Index() {
       return;
     }
 
-    const customer: sdk.Customer = JSON.parse(response);
+    const customer: customerSdk.Customer = JSON.parse(response);
     // Check if the customer also exists in the backend
-    const backendResponse = await sdk.getCustomerById(customer.id);
+    const backendResponse = await customerSdk.getCustomerById(customer.id);
     if ("error" in backendResponse) {
       setIsLoading(false);
       return;
@@ -68,7 +71,7 @@ export default function Index() {
       <View
         style={{
           flex: 1,
-          backgroundColor: "white",
+          backgroundColor: colors.background,
           justifyContent: "center",
           alignItems: "center",
         }}
@@ -198,7 +201,10 @@ const FirstForm = ({
 
     const lowercaseEmail = email.toLowerCase();
 
-    const response = await sdk.registerCustomer(lowercaseEmail, password);
+    const response = await customerSdk.registerCustomer(
+      lowercaseEmail,
+      password
+    );
 
     if ("error" in response) {
       console.error(response.error);
@@ -220,7 +226,7 @@ const FirstForm = ({
   const handleLogin = async () => {
     const lowercaseEmail = email.toLowerCase();
 
-    const response = await sdk.customerLogin(lowercaseEmail, password);
+    const response = await customerSdk.customerLogin(lowercaseEmail, password);
     if ("error" in response) {
       console.error(response.error);
       resetFields();
@@ -245,7 +251,7 @@ const FirstForm = ({
   };
 
   const loginUser = async (uid: number) => {
-    const response = await sdk.getCustomerById(uid);
+    const response = await customerSdk.getCustomerById(uid);
 
     if ("error" in response) {
       console.error(response.error);
@@ -266,7 +272,7 @@ const FirstForm = ({
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: "white" }}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       {/* Visible content on the scroll screen */}
       <ScrollView
         contentContainerStyle={{ flex: 1, alignItems: "center" }}
@@ -331,9 +337,10 @@ const FirstForm = ({
               <View style={styles.formFields}>
                 {/* Each login form field */}
                 <View style={styles.formField}>
-                  <Text>Enter your email</Text>
+                  <Text style={{ color: colors.black }}>Enter your email</Text>
                   <TextInput
                     placeholder="john@swish.com"
+                    placeholderTextColor={colors.placeholder}
                     keyboardType="email-address"
                     value={email}
                     onChangeText={setEmail}
@@ -342,9 +349,12 @@ const FirstForm = ({
                   />
                 </View>
                 <View style={styles.formField}>
-                  <Text>Enter your password</Text>
+                  <Text style={{ color: colors.black }}>
+                    Enter your password
+                  </Text>
                   <TextInput
                     placeholder="password"
+                    placeholderTextColor={colors.placeholder}
                     secureTextEntry={true}
                     value={password}
                     onChangeText={setPassword}
@@ -365,9 +375,10 @@ const FirstForm = ({
               <View style={styles.formFields}>
                 {/* Each register form field */}
                 <View style={styles.formField}>
-                  <Text>Enter your email</Text>
+                  <Text style={{ color: colors.black }}>Enter your email</Text>
                   <TextInput
                     placeholder="john@swish.com"
+                    placeholderTextColor={colors.placeholder}
                     keyboardType="email-address"
                     value={email}
                     onChangeText={setEmail}
@@ -376,9 +387,12 @@ const FirstForm = ({
                   />
                 </View>
                 <View style={styles.formField}>
-                  <Text>Enter your password</Text>
+                  <Text style={{ color: colors.black }}>
+                    Enter your password
+                  </Text>
                   <TextInput
                     placeholder="password"
+                    placeholderTextColor={colors.placeholder}
                     secureTextEntry={true}
                     value={password}
                     onChangeText={setPassword}
@@ -390,6 +404,7 @@ const FirstForm = ({
                   <Text>Confirm your password</Text>
                   <TextInput
                     placeholder="password"
+                    placeholderTextColor={colors.placeholder}
                     secureTextEntry={true}
                     value={passwordConfirmation}
                     onChangeText={setPasswordConfirmation}
@@ -402,14 +417,16 @@ const FirstForm = ({
           )}
           {loginForm ? (
             <TouchableOpacity style={styles.formButton} onPress={handleLogin}>
-              <Text style={{ color: "white", fontWeight: "600" }}>Log in</Text>
+              <Text style={{ color: colors.background, fontWeight: "600" }}>
+                Log in
+              </Text>
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
               style={styles.formButton}
               onPress={handleRegister}
             >
-              <Text style={{ color: "white", fontWeight: "600" }}>
+              <Text style={{ color: colors.background, fontWeight: "600" }}>
                 Register
               </Text>
             </TouchableOpacity>
@@ -421,13 +438,13 @@ const FirstForm = ({
 };
 
 const AdditionalForm = ({ uid }: { uid: number }) => {
+  const [profilePicForm, setProfilePicForm] = useState(false);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [address, setAddress] = useState("");
-  const router = useRouter();
 
   const saveCustomer = async (): Promise<boolean> => {
-    const response = await sdk.getCustomerById(Number(uid));
+    const response = await customerSdk.getCustomerById(Number(uid));
 
     if ("error" in response) {
       console.error(response.error);
@@ -447,14 +464,14 @@ const AdditionalForm = ({ uid }: { uid: number }) => {
     return false;
   };
 
-  const handleSubmit = async () => {
+  const submitFirstForm = async () => {
     if (firstName === "" || lastName === "" || address === "") {
       Alert.alert("You must fill all of the fields");
       return;
     }
 
     const data = { firstName, lastName, address };
-    const response = await sdk.updateCustomer(Number(uid), data);
+    const response = await customerSdk.updateCustomer(Number(uid), data);
 
     if ("error" in response) {
       console.error(response.error);
@@ -462,11 +479,12 @@ const AdditionalForm = ({ uid }: { uid: number }) => {
     }
 
     if (response.status === 200) {
-      if (await saveCustomer()) router.push("/tabs/app");
+      if (await saveCustomer()) setProfilePicForm(true);
     }
   };
+
   return (
-    <View style={{ flex: 1, backgroundColor: "white" }}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       <ScrollView
         contentContainerStyle={{ flex: 1, alignItems: "center" }}
         keyboardShouldPersistTaps="handled"
@@ -483,55 +501,175 @@ const AdditionalForm = ({ uid }: { uid: number }) => {
           <Text style={textStyles.heading}>Swish</Text>
         </View>
         <View style={styles.formContainer}>
-          {/*form itself */}
-          <View style={styles.form}>
-            {/* form header */}
-            <View style={styles.formHeader}>
-              <Text style={{ fontWeight: "500", fontSize: 18 }}>
-                Provide additional information
-              </Text>
+          {!profilePicForm ? (
+            <View>
+              <View style={styles.form}>
+                {/* form header */}
+                <View style={styles.formHeader}>
+                  <Text
+                    style={{
+                      fontWeight: "500",
+                      fontSize: 18,
+                      color: colors.black,
+                    }}
+                  >
+                    Provide additional information
+                  </Text>
+                </View>
+                {/* form fields */}
+                <View style={styles.formFields}>
+                  {/* Each form field */}
+                  <View style={styles.formField}>
+                    <Text style={{ color: colors.black }}>
+                      Enter your first name
+                    </Text>
+                    <TextInput
+                      placeholder="John"
+                      placeholderTextColor={colors.placeholder}
+                      value={firstName}
+                      onChangeText={setFirstName}
+                      style={styles.fieldInput}
+                      autoCapitalize="none"
+                    />
+                  </View>
+                  <View style={styles.formField}>
+                    <Text style={{ color: colors.black }}>
+                      Enter your last name
+                    </Text>
+                    <TextInput
+                      placeholder="Smith"
+                      placeholderTextColor={colors.placeholder}
+                      value={lastName}
+                      onChangeText={setLastName}
+                      style={styles.fieldInput}
+                      autoCapitalize="none"
+                    />
+                  </View>
+                  <View style={styles.formField}>
+                    <Text style={{ color: colors.black }}>
+                      Enter your Address
+                    </Text>
+                    <TextInput
+                      placeholder="1st St 44, NYC, New York, USA"
+                      placeholderTextColor={colors.placeholder}
+                      value={address}
+                      onChangeText={setAddress}
+                      style={styles.fieldInput}
+                      autoCapitalize="none"
+                    />
+                  </View>
+                  {/* form Button */}
+                </View>
+              </View>
+              <TouchableOpacity
+                style={styles.formButton}
+                onPress={submitFirstForm}
+              >
+                <Text style={{ color: colors.background, fontWeight: "600" }}>
+                  Continue
+                </Text>
+              </TouchableOpacity>
             </View>
-            {/* form fields */}
-            <View style={styles.formFields}>
-              {/* Each form field */}
-              <View style={styles.formField}>
-                <Text>Enter your first name</Text>
-                <TextInput
-                  placeholder="John"
-                  value={firstName}
-                  onChangeText={setFirstName}
-                  style={styles.fieldInput}
-                  autoCapitalize="none"
-                />
-              </View>
-              <View style={styles.formField}>
-                <Text>Enter your last name</Text>
-                <TextInput
-                  placeholder="Smith"
-                  value={lastName}
-                  onChangeText={setLastName}
-                  style={styles.fieldInput}
-                  autoCapitalize="none"
-                />
-              </View>
-              <View style={styles.formField}>
-                <Text>Enter your Address</Text>
-                <TextInput
-                  placeholder="1st St 44, NYC, New York, USA"
-                  value={address}
-                  onChangeText={setAddress}
-                  style={styles.fieldInput}
-                  autoCapitalize="none"
-                />
-              </View>
-              {/* form Button */}
-            </View>
-          </View>
-          <TouchableOpacity style={styles.formButton} onPress={handleSubmit}>
-            <Text style={{ color: "white", fontWeight: "600" }}>Continue</Text>
-          </TouchableOpacity>
+          ) : (
+            <ProfilePicForm uid={uid} />
+          )}
         </View>
       </ScrollView>
+    </View>
+  );
+};
+
+const ProfilePicForm = ({ uid }: { uid: number }) => {
+  const [selectedImage, setSelectedImage] = useState<string | undefined>();
+  const [pfpAdded, setPfpAdded] = useState(false);
+  const router = useRouter();
+
+  const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("Permission Denied", "We need access to your photo library.");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+
+    if (!result.assets) {
+      return;
+    }
+
+    if (result.assets.length > 1) {
+      Alert.alert("You can only select 1 Image.");
+      return;
+    }
+
+    if (result.assets.length === 1) {
+      setSelectedImage(result.assets[0].uri);
+      setPfpAdded(true);
+    }
+  };
+
+  const continueWithoutPfp = () => {
+    router.push("/tabs/app");
+  };
+
+  const submitProfilePic = async () => {
+    if (!selectedImage) return;
+    const response = await customerSdk.addProfilePic(uid, selectedImage);
+
+    if ("error" in response) {
+      console.error(response.error);
+      return;
+    }
+
+    if (response.status === 200) {
+      console.log("pfp added");
+      router.push("/tabs/app");
+    }
+  };
+
+  return (
+    <View>
+      <View style={styles.pfpForm}>
+        {/* form header */}
+        <View style={styles.pfpFormHeader}>
+          <Text
+            style={{ fontWeight: "500", fontSize: 18, color: colors.black }}
+          >
+            Add a Profile Picture
+          </Text>
+        </View>
+        <View style={styles.pfpFormMiddle}>
+          <TouchableOpacity style={styles.pfpFormPfp} onPress={pickImage}>
+            {selectedImage ? (
+              <Image source={{ uri: selectedImage }} style={styles.pfp} />
+            ) : (
+              <Text style={textStyles.addPfp}>Add a picture</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+        <View style={styles.pfpFormBottom}></View>
+      </View>
+      {!pfpAdded ? (
+        <TouchableOpacity
+          style={styles.formButton}
+          onPress={continueWithoutPfp}
+        >
+          <Text style={{ color: colors.background, fontWeight: "600" }}>
+            Continue without profile picture
+          </Text>
+        </TouchableOpacity>
+      ) : (
+        <TouchableOpacity style={styles.formButton} onPress={submitProfilePic}>
+          <Text style={{ color: colors.background, fontWeight: "600" }}>
+            Use this Profile Picture
+          </Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 };
@@ -550,6 +688,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-start",
     gap: "10",
   },
+
   header: {
     marginTop: "30%",
     justifyContent: "flex-end",
@@ -573,12 +712,12 @@ const styles = StyleSheet.create({
   form: {
     position: "fixed",
     alignItems: "center",
-    backgroundColor: "#f8f9fa",
+    backgroundColor: colors.darkerBackground,
     borderRadius: 16,
     borderBottomLeftRadius: 8,
     borderBottomRightRadius: 8,
     paddingVertical: "5%",
-    borderColor: "#ced4da",
+    borderColor: colors.grayOutline,
     borderWidth: 1,
   },
 
@@ -605,13 +744,13 @@ const styles = StyleSheet.create({
     paddingLeft: 8,
     height: 32,
     borderRadius: 6,
-    borderColor: "#ced4da",
+    borderColor: colors.grayOutline,
     borderWidth: 1,
-    backgroundColor: "white",
+    backgroundColor: colors.background,
   },
 
   formButton: {
-    backgroundColor: "#70e000",
+    backgroundColor: colors.green,
     marginTop: 8,
     alignItems: "center",
     justifyContent: "center",
@@ -620,6 +759,54 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 8,
     paddingVertical: 8,
   },
+
+  pfpForm: {
+    position: "fixed",
+    alignItems: "center",
+    backgroundColor: colors.darkerBackground,
+    borderRadius: 16,
+    borderBottomLeftRadius: 8,
+    borderBottomRightRadius: 8,
+    padding: "5%",
+    borderColor: colors.grayOutline,
+    borderWidth: 1,
+    aspectRatio: 1,
+  },
+
+  pfpFormHeader: {
+    flex: 1,
+    position: "fixed",
+    justifyContent: "flex-start",
+    alignSelf: "flex-start",
+  },
+
+  pfpFormMiddle: {
+    flex: 5,
+    width: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  pfpFormBottom: {
+    flex: 1,
+  },
+
+  pfpFormPfp: {
+    height: "70%",
+    aspectRatio: 1,
+    backgroundColor: colors.background,
+    borderRadius: "50%",
+    borderWidth: 1,
+    borderColor: colors.grayOutline,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  pfp: {
+    width: "100%",
+    aspectRatio: 1,
+    borderRadius: "50%",
+  },
 });
 
 const textStyles = StyleSheet.create({
@@ -627,45 +814,53 @@ const textStyles = StyleSheet.create({
     position: "absolute",
     fontWeight: "700",
     fontSize: 70,
-    color: "white",
+    color: colors.background,
     paddingBottom: "1.5%",
   },
 
   motto: {
-    color: "white",
+    color: colors.background,
     fontWeight: "400",
   },
 
   startLoginText: {
     fontSize: 14,
     fontWeight: "600",
+    color: colors.black,
   },
 
   startRegisterText: {
     fontSize: 14,
-    fontWeight: "400",
-    color: "white",
+    fontWeight: "600",
+    color: colors.background,
   },
   heading: {
     fontSize: 45,
     fontWeight: "600",
-    color: "#70e000",
+    color: colors.green,
   },
 
   formHeading: {
     fontWeight: "500",
     fontSize: 18,
+    color: colors.black,
   },
 
   selectedText: {
     fontSize: 14,
     fontWeight: "600",
-    color: "white",
+    color: colors.background,
   },
 
   unselectedText: {
     fontSize: 14,
     fontWeight: "400",
+    color: colors.black,
+  },
+
+  addPfp: {
+    color: colors.placeholder,
+    fontWeight: "500",
   },
 });
 
@@ -675,7 +870,7 @@ const buttonStyles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 8,
-    backgroundColor: "white",
+    backgroundColor: colors.background,
   },
 
   startRegisterButton: {
@@ -683,16 +878,17 @@ const buttonStyles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 8,
-    borderColor: "white",
-    borderWidth: 1,
+    borderColor: colors.background,
+    borderWidth: 2,
   },
+
   selectedButton: {
     flex: 1,
     height: 32,
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 8,
-    backgroundColor: "#70e000",
+    backgroundColor: colors.green,
   },
 
   unselectedButton: {
@@ -701,7 +897,7 @@ const buttonStyles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 8,
-    borderColor: "#ced4da",
+    borderColor: colors.grayOutline,
     borderWidth: 1,
   },
 });

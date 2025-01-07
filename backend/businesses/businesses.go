@@ -23,6 +23,11 @@ type Business struct {
 	Filled    int       `json:"filled"`
 }
 
+type BusinessType struct {
+	Id   int    `json:"id"`
+	Name string `json:"name"`
+}
+
 func GetBusinesses(c *gin.Context, db *sql.DB) {
 
 	// select everything from all rows from businesses.db
@@ -56,6 +61,38 @@ func GetBusinesses(c *gin.Context, db *sql.DB) {
 	c.JSON(http.StatusOK, businesses) // Return the list of businesses in JSON
 }
 
+func GetBusinessTypes(c *gin.Context, db *sql.DB) {
+	// select everything from all rows from businesses.db
+	rows, err := db.Query("SELECT id, name FROM business_types")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve business types"})
+		return
+	}
+	defer rows.Close() // close the rows at the end of the function
+
+	var businessTypes []BusinessType
+	for rows.Next() {
+		// Loop through the rows, bind each row to a new business, append the business to []businesses
+		var businessType BusinessType
+		err := rows.Scan(&businessType.Id, &businessType.Name)
+		if err != nil {
+			// There was an issue with the scan
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to scan business"})
+			return
+		}
+		businessTypes = append(businessTypes, businessType)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		// There was an issue with iterating over the rows
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error iterating over rows"})
+		return
+	}
+
+	c.JSON(http.StatusOK, businessTypes) // Return the list of businesses in JSON
+}
+
 func GetBusinessById(c *gin.Context, db *sql.DB) {
 	id := c.Query("id")
 
@@ -78,7 +115,13 @@ func GetBusinessById(c *gin.Context, db *sql.DB) {
 }
 
 func GetRandomBusiness(c *gin.Context, db *sql.DB) {
-	amount := 1
+	businessType := "any"
+	typeQuery := c.Query("type")
+	if typeQuery != "" {
+		businessType = typeQuery
+	}
+
+	var amount int
 	queryAmount := c.Query("amount") // get the ?amount= query
 	if queryAmount != "" {
 		// if there is a query
@@ -90,10 +133,22 @@ func GetRandomBusiness(c *gin.Context, db *sql.DB) {
 		amount = num
 	}
 
-	rows, err := db.Query("SELECT id, name, address, type, created_at, filled FROM businesses WHERE filled=? ORDER BY RANDOM() LIMIT ?", 1, amount)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Error getting random rows"})
-		return
+	var rows *sql.Rows
+	var err error
+
+	if businessType == "any" {
+		// If there is no given type
+		rows, err = db.Query("SELECT id, name, address, type, created_at, filled FROM businesses WHERE filled=? ORDER BY RANDOM() LIMIT ?", 1, amount)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Error getting random rows"})
+			return
+		}
+	} else {
+		rows, err = db.Query("SELECT id, name, address, type, created_at, filled FROM businesses WHERE filled=? AND type=? ORDER BY RANDOM() LIMIT ?", 1, businessType, amount)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Error getting random rows"})
+			return
+		}
 	}
 
 	var businesses []Business

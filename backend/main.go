@@ -29,6 +29,7 @@ func main() {
 	router.POST("/customer/login", func(c *gin.Context) { customers.CustomerLogin(c, db) })
 	router.DELETE("/customer", func(c *gin.Context) { customers.DeleteCustomerById(c, db) })
 	router.PUT("/customer", func(c *gin.Context) { customers.UpdateCustomer(c, db) })
+	router.POST("/customer/pfp", func(c *gin.Context) { customers.AddCustomerPfp(c, db) })
 
 	// Business accounts
 	router.GET("/businesses", func(c *gin.Context) { businesses.GetBusinesses(c, db) })
@@ -38,6 +39,8 @@ func main() {
 	router.POST("/business/login", func(c *gin.Context) { businesses.BusinessLogin(c, db) })
 	router.DELETE("/business", func(c *gin.Context) { businesses.DeleteBusinessById(c, db) })
 	router.PUT("/business", func(c *gin.Context) { businesses.UpdateBusiness(c, db) })
+
+	router.GET("/businessTypes", func(c *gin.Context) { businesses.GetBusinessTypes(c, db) })
 
 	router.Run(":8080")
 }

@@ -1,21 +1,10 @@
+import { NavigationProp, NavigationState } from "@react-navigation/native";
 import * as secureStore from "expo-secure-store";
-import * as sdk from "../../../sdk/src/routes/customer";
+import * as customerSdk from "../../../sdk/src/routes/customer";
 
-const backendUrl = "http://localhost:8080";
-
-const emptyCustomer: sdk.Customer = {
-  id: 0,
-  email: "",
-  password: "",
-  firstName: "",
-  lastName: "",
-  address: "",
-  score: 0,
-  createdAt: new Date(),
-  filled: 0,
-};
-
-const storeData = async (key: string, value: string): Promise<void> => {
+// -----------------------------------
+// this has to do with storing and getting data from expo-secure-store
+export const storeData = async (key: string, value: string): Promise<void> => {
   try {
     await secureStore.setItemAsync(key, value);
   } catch (err) {
@@ -23,7 +12,9 @@ const storeData = async (key: string, value: string): Promise<void> => {
   }
 };
 
-const getStoredData = async (key: string): Promise<string | undefined> => {
+export const getStoredData = async (
+  key: string
+): Promise<string | undefined> => {
   try {
     const value = await secureStore.getItemAsync(key);
     if (value) return value;
@@ -31,5 +22,62 @@ const getStoredData = async (key: string): Promise<string | undefined> => {
     console.error("Failed to fetch secure data", err);
   }
 };
+// -----------------------------------
 
-export { backendUrl, storeData, getStoredData, emptyCustomer };
+// -----------------------------------
+// This has to do with getting the current route for bottom and top menu
+export interface currentRoute {
+  home: boolean;
+  discover: boolean;
+  favorites: boolean;
+  account: boolean;
+  settings: boolean;
+}
+
+export const emptyRoute: currentRoute = {
+  home: false,
+  discover: false,
+  favorites: false,
+  account: false,
+  settings: false,
+};
+
+export const getCurrentRoute = (route: any): currentRoute => {
+  let currentRoute: currentRoute = { ...emptyRoute };
+
+  switch (route.name) {
+    case "Home":
+      currentRoute = { ...emptyRoute };
+      currentRoute.home = true;
+      return currentRoute;
+    case "Discover":
+      currentRoute = { ...emptyRoute };
+      currentRoute.discover = true;
+      return currentRoute;
+    case "Favorites":
+      currentRoute = { ...emptyRoute };
+      currentRoute.favorites = true;
+      return currentRoute;
+    case "Account":
+      currentRoute = { ...emptyRoute };
+      currentRoute.account = true;
+      return currentRoute;
+    case "Settings":
+      currentRoute = { ...emptyRoute };
+      currentRoute.settings = true;
+      return currentRoute;
+    default:
+      currentRoute = { ...emptyRoute };
+      return emptyRoute;
+  }
+};
+// -----------------------------------
+
+export const loadCustomer = async (): Promise<customerSdk.Customer> => {
+  const response = await getStoredData("customer");
+  if (response && response !== "") {
+    return JSON.parse(response);
+  }
+
+  return customerSdk.emptyCustomer;
+};

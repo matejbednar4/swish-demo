@@ -3,8 +3,10 @@ package customers
 import (
 	"backend/global"
 	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -13,22 +15,26 @@ import (
 )
 
 type Customer struct {
-	Id        int       `json:"id"`
-	Email     string    `json:"email"`
-	Password  string    `json:"password"`
-	FirstName *string   `json:"firstName"`
-	LastName  *string   `json:"lastName"`
-	Address   *string   `json:"address"`
-	Score     int       `json:"score"`
-	CreatedAt time.Time `json:"createdAt"`
-	Filled    int       `json:"filled"`
-	Balance   int       `json:"balance"`
+	Id            int       `json:"id"`
+	Email         string    `json:"email"`
+	Password      string    `json:"password"`
+	ProfilePicUrl *string   `json:"profilePicUrl"`
+	FirstName     *string   `json:"firstName"`
+	LastName      *string   `json:"lastName"`
+	Address       *string   `json:"address"`
+	Rating        int       `json:"rating"`
+	Balance       int       `json:"balance"`
+	VisitedPlaces int       `json:"visitedPlaces"`
+	TotalRewards  int       `json:"totalRewards"`
+	SoldImages    int       `json:"soldImages"`
+	CreatedAt     time.Time `json:"createdAt"`
+	Filled        int       `json:"filled"`
 }
 
 func GetCustomers(c *gin.Context, db *sql.DB) {
 
 	// select everything from all rows from customers.db
-	rows, err := db.Query("SELECT id, email, first_name, last_name, address, score, created_at, filled FROM customers")
+	rows, err := db.Query("SELECT id, email, profile_pic_url, first_name, last_name, address, rating, balance, visited_places, total_rewards, sold_images, created_at, filled FROM customers")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve customers"})
 		return
@@ -39,7 +45,7 @@ func GetCustomers(c *gin.Context, db *sql.DB) {
 	for rows.Next() {
 		// Loop through the rows, bind each row to a new customer, append the customer to []customers
 		var customer Customer
-		err := rows.Scan(&customer.Id, &customer.Email, &customer.FirstName, &customer.LastName, &customer.Address, &customer.Score, &customer.CreatedAt, &customer.Filled)
+		err := rows.Scan(&customer.Id, &customer.Email, &customer.ProfilePicUrl, &customer.FirstName, &customer.LastName, &customer.Address, &customer.Rating, &customer.Balance, &customer.VisitedPlaces, &customer.TotalRewards, &customer.SoldImages, &customer.CreatedAt, &customer.Filled)
 		if err != nil {
 			// There was an issue with the scan
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to scan customer"})
@@ -63,7 +69,7 @@ func GetCustomerById(c *gin.Context, db *sql.DB) {
 
 	var customer Customer
 
-	err := db.QueryRow("SELECT id, email, first_name, last_name, address, score, created_at, filled FROM customers WHERE id=?", id).Scan(&customer.Id, &customer.Email, &customer.FirstName, &customer.LastName, &customer.Address, &customer.Score, &customer.CreatedAt, &customer.Filled)
+	err := db.QueryRow("SELECT id, email, profile_pic_url, first_name, last_name, address, rating, balance, visited_places, total_rewards, sold_images, created_at, filled FROM customers WHERE id=?", id).Scan(&customer.Id, &customer.Email, &customer.ProfilePicUrl, &customer.FirstName, &customer.LastName, &customer.Address, &customer.Rating, &customer.Balance, &customer.VisitedPlaces, &customer.TotalRewards, &customer.SoldImages, &customer.CreatedAt, &customer.Filled)
 	if err == sql.ErrNoRows {
 		// No customer found with the given ID
 		c.JSON(http.StatusNotFound, gin.H{"error": "customer not found"})
@@ -217,4 +223,46 @@ func UpdateCustomer(c *gin.Context, db *sql.DB) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "success"})
+}
+
+func AddCustomerPfp(c *gin.Context, db *sql.DB) {
+	id := c.Query("id")
+	if id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "User ID required"})
+	}
+
+	file, err := c.FormFile("pfp")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to read file from request"})
+	}
+
+	// Generate a unique file name for the image (customer ID + file extension)
+	extension := file.Filename[strings.LastIndex(file.Filename, ".")+1:] // Get file extension
+	imagePath := fmt.Sprintf("%s/%s.%s", global.CustomerProfilePicKey, id, extension)
+
+	profilePicUrl, err := global.UploadImageToS3(file, global.CustomerProfilePicBucket, imagePath)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	result, err := db.Exec("UPDATE customers SET profile_pic_url=? WHERE id=?", profilePicUrl, id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Unable to update pfp in database"})
+		return
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Unable to get affected rows"})
+		return
+	}
+
+	if rowsAffected == 0 {
+		// customer not found
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Customer not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"imageUrl": profilePicUrl})
 }

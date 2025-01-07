@@ -1,47 +1,64 @@
 import React, { useEffect, useState } from "react";
 import * as customerSdk from "../../../sdk/src/routes/customer";
 import * as businessSdk from "../../../sdk/src/routes/business";
-import {
-  Image,
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  View,
-} from "react-native";
+import * as businessTypesSdk from "../../../sdk/src/routes/businessTypes";
+import { StyleSheet, Text, TouchableWithoutFeedback, View } from "react-native";
 import { useFocusEffect } from "expo-router";
 import DropDownPicker from "react-native-dropdown-picker";
+import {
+  DiscoverDropdownProvider,
+  useDropdown,
+} from "@/components/DiscoverDropdownContext";
+import { colors } from "@/constants/Colors";
 
-export default function Discover() {
+export default function DiscoverWrapper() {
+  return (
+    <DiscoverDropdownProvider>
+      <Discover />
+    </DiscoverDropdownProvider>
+  );
+}
+
+function Discover() {
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [businesses, setBusinesses] = useState<businessSdk.Business[]>();
   const [open, setOpen] = useState(false);
-  const [value, setValue] = useState(null);
-  const [items, setItems] = useState([
-    { label: "Restaurant", value: "restaurant" },
-    { label: "Gym", value: "gym" },
-    { label: "Hotel", value: "hotel" },
-    { label: "Cafe", value: "cafe" },
-    { label: "Bar", value: "bar" },
-    { label: "Shisha", value: "shisha" },
-  ]);
+  const { dropdownValue, setDropdownValue } = useDropdown();
+  const [businessTypes, setBusinessesTypes] =
+    useState<businessTypesSdk.DropDownPickerItem[]>();
 
   const getBusinesses = async () => {
-    const response = await businessSdk.getRandomBusiness(3);
+    const response = await businessSdk.getRandomBusiness(3, dropdownValue);
+
+    if (response.status === 404) {
+      setBusinesses(undefined);
+      return;
+    }
 
     if ("error" in response) {
-      console.error("Error fetching random places");
       return;
     }
 
     setBusinesses(response.json);
   };
 
+  const setTypes = async () => {
+    setBusinessesTypes(await businessTypesSdk.getBusinessTypesForDropDown());
+  };
+
   useFocusEffect(
     React.useCallback(() => {
-      getBusinesses();
-    }, [])
+      if (isInitialLoad) {
+        getBusinesses();
+        setIsInitialLoad(false);
+        setTypes();
+      }
+    }, [isInitialLoad])
   );
+
+  useEffect(() => {
+    getBusinesses();
+  }, [dropdownValue]);
 
   return (
     <TouchableWithoutFeedback onPress={() => setOpen(false)}>
@@ -54,27 +71,30 @@ export default function Discover() {
           <View style={searchStyles.box}>
             <DropDownPicker
               open={open}
-              value={value}
-              items={items}
               setOpen={setOpen}
-              setValue={setValue}
-              setItems={setItems}
+              value={dropdownValue}
+              setValue={setDropdownValue}
+              items={businessTypes || []}
               style={{
                 flex: 1,
                 borderWidth: 1,
-                borderColor: "#ced4da",
-                backgroundColor: "#f8f9fa",
+                borderColor: colors.grayOutline,
+                backgroundColor: colors.darkerBackground,
               }}
               dropDownContainerStyle={{
                 justifyContent: "center",
-                backgroundColor: "#f8f9fa",
+                backgroundColor: colors.darkerBackground,
                 borderTopWidth: 0,
                 borderWidth: 1,
-                borderColor: "#ced4da",
+                borderColor: colors.grayOutline,
               }}
               containerStyle={{ flex: 1 }}
-              placeholderStyle={{ color: "#b1a7a6" }}
-              placeholder="Restaurant"
+              placeholderStyle={{ color: colors.placeholder }}
+              placeholder="Anything"
+              scrollViewProps={{
+                persistentScrollbar: true,
+              }}
+              textStyle={{ color: colors.black }}
             />
           </View>
         </View>
@@ -91,7 +111,9 @@ export default function Discover() {
             </View>
           ))
         ) : (
-          <Text>No businesses available</Text>
+          <View>
+            <Text style={{ color: colors.black }}>No businesses available</Text>
+          </View>
         )}
       </View>
     </TouchableWithoutFeedback>
@@ -103,18 +125,17 @@ const styles = StyleSheet.create({
     height: "100%",
     width: "100%",
     alignItems: "center",
-    justifyContent: "center",
     paddingHorizontal: "6%",
     paddingVertical: "8%",
-    backgroundColor: "#ffffff",
+    backgroundColor: colors.background,
     flexDirection: "column",
     gap: "5%",
   },
 
   business: {
-    flex: 1,
+    height: "24%",
     width: "100%",
-    borderColor: "#ced4da",
+    borderColor: colors.grayOutline,
     borderWidth: 1,
     borderRadius: 8,
   },
@@ -139,5 +160,6 @@ const textStyles = StyleSheet.create({
     alignSelf: "flex-start",
     marginBottom: "2%",
     fontWeight: "bold",
+    color: colors.black,
   },
 });

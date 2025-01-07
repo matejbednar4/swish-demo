@@ -1,35 +1,52 @@
 import { backendUrl, endpoints } from "../global";
-export {
-  getCustomers,
-  getCustomerById,
-  registerCustomer,
-  customerLogin,
-  deleteCustomer,
-  updateCustomer,
-  Customer,
-};
 
-interface Customer {
+export interface Customer {
   id: number;
   email: string;
   password: string;
   firstName: string;
   lastName: string;
   address: string;
-  score: number;
+  rating: number;
   balance: number;
+  visitedPlaces: number;
+  totalRewards: number;
+  soldImages: number;
   createdAt: Date;
   filled: number;
 }
+
+export const emptyCustomer: Customer = {
+  id: 0,
+  email: "",
+  password: "",
+  firstName: "",
+  lastName: "",
+  address: "",
+  rating: 0,
+  balance: 0,
+  visitedPlaces: 0,
+  totalRewards: 0,
+  soldImages: 0,
+  createdAt: new Date(),
+  filled: 0,
+};
 
 type ApiResponse<T> =
   | { status: number; json: T }
   | { status: number; error: string };
 
-const getCustomers = async function (): Promise<ApiResponse<Customer[]>> {
+export const getCustomers = async function (): Promise<
+  ApiResponse<Customer[]>
+> {
   try {
     const response = await fetch(backendUrl + endpoints.customers);
     const json = await response.json();
+
+    if ("error" in json) {
+      return { status: response.status, error: json };
+    }
+
     return { status: response.status, json };
   } catch (err) {
     console.error(err);
@@ -37,12 +54,17 @@ const getCustomers = async function (): Promise<ApiResponse<Customer[]>> {
   }
 };
 
-const getCustomerById = async function (
+export const getCustomerById = async function (
   id: number
 ): Promise<ApiResponse<Customer>> {
   try {
     const response = await fetch(backendUrl + endpoints.customer + `?id=${id}`);
     const json = await response.json();
+
+    if ("error" in json) {
+      return { status: response.status, error: json };
+    }
+
     return { status: response.status, json };
   } catch (err) {
     console.error(err);
@@ -50,7 +72,7 @@ const getCustomerById = async function (
   }
 };
 
-const registerCustomer = async function (
+export const registerCustomer = async function (
   email: string,
   password: string
 ): Promise<ApiResponse<{ id: number }>> {
@@ -62,6 +84,11 @@ const registerCustomer = async function (
       body: JSON.stringify(customer),
     });
     const json = await response.json();
+
+    if ("error" in json) {
+      return { status: response.status, error: json };
+    }
+
     return { status: response.status, json };
   } catch (err) {
     console.error(err);
@@ -69,7 +96,7 @@ const registerCustomer = async function (
   }
 };
 
-const customerLogin = async function (
+export const customerLogin = async function (
   email: string,
   password: string
 ): Promise<ApiResponse<{ id: number }>> {
@@ -81,6 +108,11 @@ const customerLogin = async function (
       body: JSON.stringify(user),
     });
     const json = await response.json();
+
+    if ("error" in json) {
+      return { status: response.status, error: json };
+    }
+
     return { status: response.status, json };
   } catch (err) {
     console.error(err);
@@ -88,7 +120,7 @@ const customerLogin = async function (
   }
 };
 
-const deleteCustomer = async function (
+export const deleteCustomer = async function (
   id: number
 ): Promise<ApiResponse<{ message: string }>> {
   try {
@@ -99,6 +131,11 @@ const deleteCustomer = async function (
       }
     );
     const json = await response.json();
+
+    if ("error" in json) {
+      return { status: response.status, error: json };
+    }
+
     return { status: response.status, json };
   } catch (err) {
     console.error(err);
@@ -106,7 +143,7 @@ const deleteCustomer = async function (
   }
 };
 
-const updateCustomer = async function (
+export const updateCustomer = async function (
   id: number,
   data: { firstName: string; lastName: string; address: string }
 ): Promise<ApiResponse<{ message: string }>> {
@@ -121,6 +158,50 @@ const updateCustomer = async function (
     );
 
     const json = await response.json();
+
+    if ("error" in json) {
+      return { status: response.status, error: json };
+    }
+
+    return { status: response.status, json };
+  } catch (err) {
+    console.error(err);
+    return { status: 500, error: "Network error" };
+  }
+};
+
+export const addProfilePic = async function (
+  id: number,
+  imageUri: string
+): Promise<ApiResponse<{ imageUrl: string }>> {
+  if (!id || !imageUri) {
+    return {
+      status: 400,
+      error: "Missing required parameters: id or imageUri",
+    };
+  }
+  const formData = new FormData();
+  formData.append("pfp", {
+    uri: imageUri,
+    type: "image/jpeg",
+    name: "profile-pic.jpg",
+  } as any);
+
+  try {
+    const response = await fetch(
+      backendUrl + endpoints.customerAddPfp + `?id=${id}`,
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
+
+    const json = await response.json();
+
+    if ("error" in json) {
+      return { status: response.status, error: json };
+    }
+
     return { status: response.status, json };
   } catch (err) {
     console.error(err);
