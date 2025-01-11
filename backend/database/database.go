@@ -35,16 +35,22 @@ func createCustomersTable(db *sql.DB) {
 		password TEXT NOT NULL,
 		first_name VARCHAR(30),
 		last_name VARCHAR(30),
-		address VARCHAR(255),
+		full_address VARCHAR(255),
+		country VARCHAR(100),
+		state VARCHAR(100),
+		city VARCHAR(100),
+		postal_code VARCHAR(20),
+		street VARCHAR(100),
+		latitude REAL,
+		longitude REAL,
 		rating INTEGER NOT NULL DEFAULT 50,
 		balance INTEGER NOT NULL DEFAULT 0,
-		visited_places NOT NULL DEFAULT 0,
-		total_rewards NOT NULL DEFAULT 0,
-		sold_images NOT NULL DEFAULT 0,
+		total_rewards INTEGER NOT NULL DEFAULT 0,
+		visited_places INTEGER NOT NULL DEFAULT 0,
+		sold_images INTEGER NOT NULL DEFAULT 0,
 		created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 		filled INTEGER NOT NULL DEFAULT 0
-		);
-	`
+	);`
 
 	_, err := db.Exec(query)
 	if err != nil {

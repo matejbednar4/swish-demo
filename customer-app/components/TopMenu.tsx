@@ -1,15 +1,15 @@
 import { useEffect, useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import * as customerSdk from "../../sdk/src/routes/customer";
 import { useRoute } from "@react-navigation/native";
 import { useCustomer } from "./CustomerContext";
 import { currentRoute, emptyRoute, getCurrentRoute } from "./global/global";
 import { useNavigation } from "expo-router";
 import { colors } from "@/constants/Colors";
-import { AccountSettings } from "./Svg";
+import { Account, AccountSettings } from "./Svg";
 
 interface PageMenuProps {
-  customer: customerSdk.Customer | undefined;
+  customer: customerSdk.Customer;
   goToPage: {
     home: () => void;
     discover: () => void;
@@ -20,7 +20,7 @@ interface PageMenuProps {
 }
 
 interface AccountMenuProps {
-  customer: customerSdk.Customer | undefined;
+  customer: customerSdk.Customer;
   goToPage: {
     home: () => void;
     discover: () => void;
@@ -39,7 +39,7 @@ interface MenuProps {
 export default function TopMenu({ title, onBack }: MenuProps) {
   const navigation: any = useNavigation();
   const route = useRoute();
-  const { customer, setCustomer } = useCustomer();
+  const { customer } = useCustomer();
   const [currentRoute, setCurrentRoute] = useState<currentRoute>(emptyRoute);
 
   const goToPage = {
@@ -97,7 +97,7 @@ export default function TopMenu({ title, onBack }: MenuProps) {
   );
 }
 
-const HomeMenu = ({ customer, goToPage }: PageMenuProps) => {
+const HomeMenu = ({ goToPage }: PageMenuProps) => {
   return (
     <View style={styles.main}>
       <View style={styles.menu}>
@@ -108,9 +108,7 @@ const HomeMenu = ({ customer, goToPage }: PageMenuProps) => {
         </TouchableOpacity>
         <View style={styles.rightSide}>
           <TouchableOpacity style={styles.pfp} onPress={goToPage.account}>
-            <Text style={{ fontSize: 10, fontWeight: 500 }}>
-              {customer?.firstName || "guest"}
-            </Text>
+            <ProfilePic />
           </TouchableOpacity>
         </View>
       </View>
@@ -118,21 +116,18 @@ const HomeMenu = ({ customer, goToPage }: PageMenuProps) => {
   );
 };
 
-const DiscoverMenu = ({ customer, goToPage }: PageMenuProps) => {
+const DiscoverMenu = ({ goToPage }: PageMenuProps) => {
   return (
     <View style={styles.main}>
       <View style={styles.menu}>
         <TouchableOpacity
           style={{ height: "100%", width: "20%", justifyContent: "center" }}
-          onPress={goToPage.home}
         >
           <Text style={textStyles.heading}>Swish</Text>
         </TouchableOpacity>
         <View style={styles.rightSide}>
           <TouchableOpacity style={styles.pfp} onPress={goToPage.account}>
-            <Text style={{ fontSize: 10, fontWeight: 500 }}>
-              {customer?.firstName || "guest"}
-            </Text>
+            <ProfilePic />
           </TouchableOpacity>
         </View>
       </View>
@@ -140,21 +135,18 @@ const DiscoverMenu = ({ customer, goToPage }: PageMenuProps) => {
   );
 };
 
-const FavoritesMenu = ({ customer, goToPage }: PageMenuProps) => {
+const FavoritesMenu = ({ goToPage }: PageMenuProps) => {
   return (
     <View style={styles.main}>
       <View style={styles.menu}>
         <TouchableOpacity
           style={{ height: "100%", width: "20%", justifyContent: "center" }}
-          onPress={goToPage.home}
         >
           <Text style={textStyles.heading}>Swish</Text>
         </TouchableOpacity>
         <View style={styles.rightSide}>
           <TouchableOpacity style={styles.pfp} onPress={goToPage.account}>
-            <Text style={{ fontSize: 10, fontWeight: 500 }}>
-              {customer?.firstName || "guest"}
-            </Text>
+            <ProfilePic />
           </TouchableOpacity>
         </View>
       </View>
@@ -162,17 +154,13 @@ const FavoritesMenu = ({ customer, goToPage }: PageMenuProps) => {
   );
 };
 
-const AccountMenu = ({
-  customer,
-  goToPage,
-  currentRoute,
-}: AccountMenuProps) => {
+const AccountMenu = ({ goToPage, currentRoute }: AccountMenuProps) => {
   return (
     <View style={styles.accountMain}>
       <View style={styles.accountLeftSide}></View>
       <View style={styles.accountMiddle}>
         <View style={styles.accountPfp}>
-          <Text style={{ fontSize: 10, fontWeight: 500 }}>pfp</Text>
+          <ProfilePic />
         </View>
       </View>
       <View style={styles.accountRightSide}>
@@ -185,6 +173,35 @@ const AccountMenu = ({
       </View>
     </View>
   );
+};
+
+const ProfilePic = () => {
+  const { customer } = useCustomer();
+  if (customer.profilePicUrl) {
+    const uri = customer.profilePicUrl;
+
+    useEffect(() => {
+      Image.prefetch(uri); // Preload the image
+    }, [uri]);
+
+    return (
+      <Image
+        source={{ uri, cache: "force-cache" }}
+        style={{ height: "100%", aspectRatio: 1, borderRadius: "50%" }}
+      />
+    );
+  }
+
+  if (!customer.profilePicUrl) {
+    return (
+      <View>
+        <Account
+          style={{ width: "50%", aspectRatio: 1 }}
+          fill={colors.placeholder}
+        />
+      </View>
+    );
+  }
 };
 
 const styles = StyleSheet.create({

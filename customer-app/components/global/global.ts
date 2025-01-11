@@ -1,6 +1,7 @@
 import { NavigationProp, NavigationState } from "@react-navigation/native";
 import * as secureStore from "expo-secure-store";
 import * as customerSdk from "../../../sdk/src/routes/customer";
+import { useCustomer } from "../CustomerContext";
 
 // -----------------------------------
 // this has to do with storing and getting data from expo-secure-store
@@ -80,4 +81,18 @@ export const loadCustomer = async (): Promise<customerSdk.Customer> => {
   }
 
   return customerSdk.emptyCustomer;
+};
+
+export const updateCustomerFromBackend = async () => {
+  const id = (await loadCustomer()).id;
+  const response = await customerSdk.getCustomerById(id);
+
+  if ("error" in response) {
+    console.error("here:", response.error);
+    return;
+  }
+
+  const json = response.json;
+  await storeData("customer", JSON.stringify(json));
+  return json;
 };

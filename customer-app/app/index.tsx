@@ -206,14 +206,14 @@ const FirstForm = ({
       password
     );
 
-    if ("error" in response) {
-      console.error(response.error);
-      return;
-    }
-
     if (response.status === 409) {
       Alert.alert("This email is already registered.");
       resetFields();
+      return;
+    }
+
+    if ("error" in response) {
+      console.error(response.error);
       return;
     }
 
@@ -227,11 +227,6 @@ const FirstForm = ({
     const lowercaseEmail = email.toLowerCase();
 
     const response = await customerSdk.customerLogin(lowercaseEmail, password);
-    if ("error" in response) {
-      console.error(response.error);
-      resetFields();
-      return;
-    }
 
     if (response.status === 401) {
       Alert.alert("Wrong password.");
@@ -241,6 +236,12 @@ const FirstForm = ({
 
     if (response.status === 404) {
       Alert.alert("Email not registered.");
+      resetFields();
+      return;
+    }
+
+    if ("error" in response) {
+      console.error(response.error);
       resetFields();
       return;
     }
@@ -441,6 +442,11 @@ const AdditionalForm = ({ uid }: { uid: number }) => {
   const [profilePicForm, setProfilePicForm] = useState(false);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [country, setCountry] = useState("");
+  const [state, setState] = useState("");
+  const [city, setCity] = useState("");
+  const [postalCode, setPostalCode] = useState("");
+  const [street, setStreet] = useState("");
   const [address, setAddress] = useState("");
 
   const saveCustomer = async (): Promise<boolean> => {
@@ -465,13 +471,38 @@ const AdditionalForm = ({ uid }: { uid: number }) => {
   };
 
   const submitFirstForm = async () => {
-    if (firstName === "" || lastName === "" || address === "") {
-      Alert.alert("You must fill all of the fields");
+    if (
+      firstName === "" ||
+      lastName === "" ||
+      street === "" ||
+      city === "" ||
+      postalCode === "" ||
+      country === ""
+    ) {
+      Alert.alert("You must fill all of the fields marked with a *");
       return;
     }
 
-    const data = { firstName, lastName, address };
+    const data = {
+      firstName,
+      lastName,
+      street,
+      city,
+      postalCode,
+      state,
+      country,
+    };
     const response = await customerSdk.updateCustomer(Number(uid), data);
+
+    if (response.status === 404) {
+      Alert.alert("The provided address does not exist");
+      setStreet("");
+      setCity("");
+      setPostalCode("");
+      setState("");
+      setCountry("");
+      return;
+    }
 
     if ("error" in response) {
       console.error(response.error);
@@ -519,44 +550,92 @@ const AdditionalForm = ({ uid }: { uid: number }) => {
                 {/* form fields */}
                 <View style={styles.formFields}>
                   {/* Each form field */}
-                  <View style={styles.formField}>
-                    <Text style={{ color: colors.black }}>
-                      Enter your first name
-                    </Text>
-                    <TextInput
-                      placeholder="John"
-                      placeholderTextColor={colors.placeholder}
-                      value={firstName}
-                      onChangeText={setFirstName}
-                      style={styles.fieldInput}
-                      autoCapitalize="none"
-                    />
+                  <View style={styles.fieldRow}>
+                    <View style={styles.field}>
+                      <Text style={{ color: colors.black }}>First name*</Text>
+                      <TextInput
+                        placeholder="John"
+                        placeholderTextColor={colors.placeholder}
+                        value={firstName}
+                        onChangeText={setFirstName}
+                        style={styles.fieldInput}
+                        autoCapitalize="none"
+                      />
+                    </View>
+                    <View style={styles.field}>
+                      <Text style={{ color: colors.black }}>Last name*</Text>
+                      <TextInput
+                        placeholder="Smith"
+                        placeholderTextColor={colors.placeholder}
+                        value={lastName}
+                        onChangeText={setLastName}
+                        style={styles.fieldInput}
+                        autoCapitalize="none"
+                      />
+                    </View>
                   </View>
-                  <View style={styles.formField}>
-                    <Text style={{ color: colors.black }}>
-                      Enter your last name
-                    </Text>
-                    <TextInput
-                      placeholder="Smith"
-                      placeholderTextColor={colors.placeholder}
-                      value={lastName}
-                      onChangeText={setLastName}
-                      style={styles.fieldInput}
-                      autoCapitalize="none"
-                    />
+                  <View style={styles.fieldRow}>
+                    <View style={styles.field}>
+                      <Text style={{ color: colors.black }}>Street*</Text>
+                      <TextInput
+                        placeholder="2nd Street 23"
+                        placeholderTextColor={colors.placeholder}
+                        value={street}
+                        onChangeText={setStreet}
+                        style={styles.fieldInput}
+                        autoCapitalize="none"
+                      />
+                    </View>
                   </View>
-                  <View style={styles.formField}>
-                    <Text style={{ color: colors.black }}>
-                      Enter your Address
-                    </Text>
-                    <TextInput
-                      placeholder="1st St 44, NYC, New York, USA"
-                      placeholderTextColor={colors.placeholder}
-                      value={address}
-                      onChangeText={setAddress}
-                      style={styles.fieldInput}
-                      autoCapitalize="none"
-                    />
+                  <View style={styles.fieldRow}>
+                    <View style={styles.field}>
+                      <Text style={{ color: colors.black }}>City*</Text>
+                      <TextInput
+                        placeholder="New York City"
+                        placeholderTextColor={colors.placeholder}
+                        value={city}
+                        onChangeText={setCity}
+                        style={styles.fieldInput}
+                        autoCapitalize="none"
+                      />
+                    </View>
+                    <View style={styles.field}>
+                      <Text style={{ color: colors.black }}>Postal Code*</Text>
+                      <TextInput
+                        placeholder="12345"
+                        placeholderTextColor={colors.placeholder}
+                        value={postalCode}
+                        onChangeText={setPostalCode}
+                        style={styles.fieldInput}
+                        autoCapitalize="none"
+                      />
+                    </View>
+                  </View>
+                  <View style={styles.fieldRow}>
+                    <View style={styles.field}>
+                      <Text style={{ color: colors.black }}>State</Text>
+                      <TextInput
+                        placeholder="New York"
+                        placeholderTextColor={colors.placeholder}
+                        value={state}
+                        onChangeText={setState}
+                        style={styles.fieldInput}
+                        autoCapitalize="none"
+                      />
+                    </View>
+                  </View>
+                  <View style={styles.fieldRow}>
+                    <View style={styles.field}>
+                      <Text style={{ color: colors.black }}>Country*</Text>
+                      <TextInput
+                        placeholder="United States"
+                        placeholderTextColor={colors.placeholder}
+                        value={country}
+                        onChangeText={setCountry}
+                        style={styles.fieldInput}
+                        autoCapitalize="none"
+                      />
+                    </View>
                   </View>
                   {/* form Button */}
                 </View>
@@ -627,7 +706,6 @@ const ProfilePicForm = ({ uid }: { uid: number }) => {
     }
 
     if (response.status === 200) {
-      console.log("pfp added");
       router.push("/tabs/app");
     }
   };
@@ -733,6 +811,17 @@ const styles = StyleSheet.create({
     width: "90%",
     flexDirection: "column",
     gap: 16,
+  },
+
+  fieldRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: "8%",
+  },
+
+  field: {
+    flex: 1,
+    gap: 4,
   },
 
   formField: {

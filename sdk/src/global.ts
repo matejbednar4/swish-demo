@@ -5,6 +5,8 @@ export const endpoints = {
   customer: "/customer",
   customerLogin: "/customer/login",
   customerAddPfp: "/customer/pfp",
+  customerUpdateName: "/customer/name",
+  customerUpdateAddress: "/customer/address",
   businesses: "/businesses",
   business: "/business",
   businessLogin: "/business/login",

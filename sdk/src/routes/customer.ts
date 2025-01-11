@@ -4,13 +4,21 @@ export interface Customer {
   id: number;
   email: string;
   password: string;
+  profilePicUrl: string;
   firstName: string;
   lastName: string;
-  address: string;
+  fullAddress: string;
+  country: string;
+  state: string;
+  city: string;
+  postalCode: string;
+  street: string;
+  latitude: string;
+  longitude: string;
   rating: number;
   balance: number;
-  visitedPlaces: number;
   totalRewards: number;
+  visitedPlaces: number;
   soldImages: number;
   createdAt: Date;
   filled: number;
@@ -20,13 +28,21 @@ export const emptyCustomer: Customer = {
   id: 0,
   email: "",
   password: "",
+  profilePicUrl: "",
   firstName: "",
   lastName: "",
-  address: "",
+  fullAddress: "",
+  country: "",
+  state: "",
+  city: "",
+  postalCode: "",
+  street: "",
+  latitude: "",
+  longitude: "",
   rating: 0,
   balance: 0,
-  visitedPlaces: 0,
   totalRewards: 0,
+  visitedPlaces: 0,
   soldImages: 0,
   createdAt: new Date(),
   filled: 0,
@@ -145,11 +161,82 @@ export const deleteCustomer = async function (
 
 export const updateCustomer = async function (
   id: number,
-  data: { firstName: string; lastName: string; address: string }
+  data: {
+    firstName: string;
+    lastName: string;
+    street: string;
+    city: string;
+    postalCode: string;
+    state: string;
+    country: string;
+  }
 ): Promise<ApiResponse<{ message: string }>> {
   try {
     const response = await fetch(
       backendUrl + endpoints.customer + `?id=${id}`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      }
+    );
+
+    const json = await response.json();
+
+    if ("error" in json) {
+      return { status: response.status, error: json };
+    }
+
+    return { status: response.status, json };
+  } catch (err) {
+    console.error(err);
+    return { status: 500, error: "Network error" };
+  }
+};
+
+export const updateCustomerName = async function (
+  id: number,
+  data: {
+    firstName: string;
+    lastName: string;
+  }
+): Promise<ApiResponse<{ message: string }>> {
+  try {
+    const response = await fetch(
+      backendUrl + endpoints.customerUpdateName + `?id=${id}`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      }
+    );
+
+    const json = await response.json();
+
+    if ("error" in json) {
+      return { status: response.status, error: json };
+    }
+
+    return { status: response.status, json };
+  } catch (err) {
+    console.error(err);
+    return { status: 500, error: "Network error" };
+  }
+};
+
+export const updateCustomerAddress = async function (
+  id: number,
+  data: {
+    street: string;
+    city: string;
+    postalCode: string;
+    state: string;
+    country: string;
+  }
+): Promise<ApiResponse<{ message: string }>> {
+  try {
+    const response = await fetch(
+      backendUrl + endpoints.customerUpdateAddress + `?id=${id}`,
       {
         method: "PUT",
         headers: { "Content-Type": "application/json" },

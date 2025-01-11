@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { StyleSheet, View } from "react-native";
+import { Alert, StyleSheet, View } from "react-native";
 import TopMenu from "@/components/TopMenu";
 import Home from "./home";
 import Discover from "./discover";
@@ -8,7 +8,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import Account from "./account";
 import Favorites from "./favorites";
-import { getStoredData, loadCustomer } from "@/components/global/global";
+import {
+  getStoredData,
+  loadCustomer,
+  storeData,
+} from "@/components/global/global";
 import { CustomerProvider, useCustomer } from "@/components/CustomerContext";
 import * as customerSdk from "../../../sdk/src/routes/customer";
 import { colors } from "@/constants/Colors";
@@ -25,15 +29,37 @@ export default function AppWrapper() {
 }
 
 function App() {
-  const { customer, setCustomer } = useCustomer();
+  const { setCustomer } = useCustomer();
 
-  const loadCustomerFromGlobal = async () => {
-    setCustomer(await loadCustomer());
+  const updateCustomerFromBackend = async () => {
+    const storedCustomerString = await getStoredData("customer");
+    if (!storedCustomerString || storedCustomerString === "") {
+      Alert.alert("Nobody is logged in");
+      return;
+    }
+
+    const storedCustomer = JSON.parse(storedCustomerString);
+
+    if (storedCustomer.id === 0) {
+      Alert.alert("Nobody is logged in");
+      return;
+    }
+
+    const response = await customerSdk.getCustomerById(storedCustomer.id);
+
+    if ("error" in response) {
+      console.error("here:", response.error);
+      return;
+    }
+
+    const json = response.json;
+    storeData("customer", JSON.stringify(json));
+    setCustomer(json);
   };
 
   useEffect(() => {
-    loadCustomerFromGlobal();
-  }, [customer]);
+    updateCustomerFromBackend();
+  }, []);
 
   return (
     <View

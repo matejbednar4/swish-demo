@@ -1,7 +1,7 @@
 package main
 
 import (
-	businesses "backend/businesses"
+	"backend/businesses"
 	customers "backend/customers"
 	database "backend/database"
 
@@ -29,6 +29,8 @@ func main() {
 	router.POST("/customer/login", func(c *gin.Context) { customers.CustomerLogin(c, db) })
 	router.DELETE("/customer", func(c *gin.Context) { customers.DeleteCustomerById(c, db) })
 	router.PUT("/customer", func(c *gin.Context) { customers.UpdateCustomer(c, db) })
+	router.PUT("/customer/name", func(c *gin.Context) { customers.UpdateName(c, db) })
+	router.PUT("/customer/address", func(c *gin.Context) { customers.UpdateAddress(c, db) })
 	router.POST("/customer/pfp", func(c *gin.Context) { customers.AddCustomerPfp(c, db) })
 
 	// Business accounts

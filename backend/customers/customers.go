@@ -15,26 +15,37 @@ import (
 )
 
 type Customer struct {
-	Id            int       `json:"id"`
-	Email         string    `json:"email"`
-	Password      string    `json:"password"`
-	ProfilePicUrl *string   `json:"profilePicUrl"`
-	FirstName     *string   `json:"firstName"`
-	LastName      *string   `json:"lastName"`
-	Address       *string   `json:"address"`
-	Rating        int       `json:"rating"`
-	Balance       int       `json:"balance"`
-	VisitedPlaces int       `json:"visitedPlaces"`
-	TotalRewards  int       `json:"totalRewards"`
-	SoldImages    int       `json:"soldImages"`
-	CreatedAt     time.Time `json:"createdAt"`
-	Filled        int       `json:"filled"`
+	Id            int       `json:"id" db:"id"`
+	Email         string    `json:"email" db:"email"`
+	Password      string    `json:"password" db:"password"`
+	ProfilePicUrl *string   `json:"profilePicUrl" db:"profile_pic_url"`
+	FirstName     *string   `json:"firstName" db:"first_name"`
+	LastName      *string   `json:"lastName" db:"last_name"`
+	FullAddress   *string   `json:"fullAddress" db:"full_address"`
+	Country       *string   `json:"country" db:"country"`
+	State         *string   `json:"state" db:"state"`
+	City          *string   `json:"city" db:"city"`
+	PostalCode    *string   `json:"postalCode" db:"postal_code"`
+	Street        *string   `json:"street" db:"street"`
+	Latitude      *float64  `json:"latitude" db:"latitude"`
+	Longitude     *float64  `json:"longitude" db:"longitude"`
+	Rating        int       `json:"rating" db:"rating"`
+	Balance       int       `json:"balance" db:"balance"`
+	TotalRewards  int       `json:"totalRewards" db:"total_rewards"`
+	VisitedPlaces int       `json:"visitedPlaces" db:"visited_places"`
+	SoldImages    int       `json:"soldImages" db:"sold_images"`
+	CreatedAt     time.Time `json:"createdAt" db:"created_at"`
+	Filled        int       `json:"filled" db:"filled"`
 }
 
 func GetCustomers(c *gin.Context, db *sql.DB) {
 
 	// select everything from all rows from customers.db
-	rows, err := db.Query("SELECT id, email, profile_pic_url, first_name, last_name, address, rating, balance, visited_places, total_rewards, sold_images, created_at, filled FROM customers")
+	rows, err := db.Query(`SELECT 
+		id, email, profile_pic_url, first_name, last_name, 
+		full_address, country, state, city, postal_code, street, latitude, longitude,
+		rating, balance, total_rewards, visited_places, sold_images, 
+		created_at, filled FROM customers`)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve customers"})
 		return
@@ -45,7 +56,11 @@ func GetCustomers(c *gin.Context, db *sql.DB) {
 	for rows.Next() {
 		// Loop through the rows, bind each row to a new customer, append the customer to []customers
 		var customer Customer
-		err := rows.Scan(&customer.Id, &customer.Email, &customer.ProfilePicUrl, &customer.FirstName, &customer.LastName, &customer.Address, &customer.Rating, &customer.Balance, &customer.VisitedPlaces, &customer.TotalRewards, &customer.SoldImages, &customer.CreatedAt, &customer.Filled)
+		err := rows.Scan(&customer.Id, &customer.Email, &customer.ProfilePicUrl, &customer.FirstName, &customer.LastName,
+			&customer.FullAddress, &customer.Country, &customer.State, &customer.City, &customer.PostalCode, &customer.Street,
+			&customer.Latitude, &customer.Longitude,
+			&customer.Rating, &customer.Balance, &customer.TotalRewards, &customer.VisitedPlaces, &customer.SoldImages,
+			&customer.CreatedAt, &customer.Filled)
 		if err != nil {
 			// There was an issue with the scan
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to scan customer"})
@@ -69,7 +84,16 @@ func GetCustomerById(c *gin.Context, db *sql.DB) {
 
 	var customer Customer
 
-	err := db.QueryRow("SELECT id, email, profile_pic_url, first_name, last_name, address, rating, balance, visited_places, total_rewards, sold_images, created_at, filled FROM customers WHERE id=?", id).Scan(&customer.Id, &customer.Email, &customer.ProfilePicUrl, &customer.FirstName, &customer.LastName, &customer.Address, &customer.Rating, &customer.Balance, &customer.VisitedPlaces, &customer.TotalRewards, &customer.SoldImages, &customer.CreatedAt, &customer.Filled)
+	err := db.QueryRow(`SELECT 
+		id, email, profile_pic_url, first_name, last_name, 
+		full_address, country, state, city, postal_code, street, latitude, longitude,
+		rating, balance, total_rewards, visited_places, sold_images, created_at, filled 
+		FROM customers WHERE id=?`, id).Scan(&customer.Id, &customer.Email, &customer.ProfilePicUrl, &customer.FirstName, &customer.LastName,
+		&customer.FullAddress, &customer.Country, &customer.State, &customer.City, &customer.PostalCode, &customer.Street,
+		&customer.Latitude, &customer.Longitude,
+		&customer.Rating, &customer.Balance, &customer.TotalRewards, &customer.VisitedPlaces, &customer.SoldImages,
+		&customer.CreatedAt, &customer.Filled)
+
 	if err == sql.ErrNoRows {
 		// No customer found with the given ID
 		c.JSON(http.StatusNotFound, gin.H{"error": "customer not found"})
@@ -204,8 +228,36 @@ func UpdateCustomer(c *gin.Context, db *sql.DB) {
 		return
 	}
 
-	result, err := db.Exec("UPDATE customers SET first_name=?, last_name=?, address=?, filled=? WHERE id=?", passedData.FirstName, passedData.LastName, passedData.Address, 1, id)
+	fullAddress := fmt.Sprintf("%s, %s, %s, %s, %s",
+		*passedData.Street, *passedData.City, *passedData.State, *passedData.PostalCode, *passedData.Country)
+
+	lat, lon, err := global.GetCoordinatesFromAddress(fullAddress)
 	if err != nil {
+		// if address doesnt exist
+		if err.Error() == "404" {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Nominatim couldn't find address"})
+			return
+		}
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to get latitude and longitude"})
+		return
+	}
+
+	passedData.Longitude = &lon
+	passedData.Latitude = &lat
+	passedData.FullAddress = &fullAddress
+
+	result, err := db.Exec(`UPDATE customers 
+		SET first_name=?, last_name=?, 
+		full_address=?, country=?, state=?, city=?, postal_code=?, street=?, 
+		longitude=?, latitude=?,
+		filled=? WHERE id=?`,
+		passedData.FirstName, passedData.LastName,
+		passedData.FullAddress, passedData.Country, passedData.State, passedData.City, passedData.PostalCode, passedData.Street,
+		passedData.Longitude, passedData.Latitude,
+		1, id)
+
+	if err != nil {
+		fmt.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Unable to update database"})
 		return
 	}
@@ -238,9 +290,9 @@ func AddCustomerPfp(c *gin.Context, db *sql.DB) {
 
 	// Generate a unique file name for the image (customer ID + file extension)
 	extension := file.Filename[strings.LastIndex(file.Filename, ".")+1:] // Get file extension
-	imagePath := fmt.Sprintf("%s/%s.%s", global.CustomerProfilePicKey, id, extension)
+	imagePath := fmt.Sprintf("%s/customerpfp%s.%s", global.CustomerProfilePicKey, id, extension)
 
-	profilePicUrl, err := global.UploadImageToS3(file, global.CustomerProfilePicBucket, imagePath)
+	profilePicUrl, err := global.UploadImageToS3(file, global.AWSBucket, imagePath)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -265,4 +317,96 @@ func AddCustomerPfp(c *gin.Context, db *sql.DB) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"imageUrl": profilePicUrl})
+}
+
+func UpdateName(c *gin.Context, db *sql.DB) {
+	id := c.Query("id")
+	var passedData Customer
+
+	err := c.ShouldBindJSON(&passedData)
+	if err != nil {
+		// There was an issue binding the data
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to bind data"})
+		return
+	}
+
+	result, err := db.Exec(`UPDATE customers 
+		SET first_name=?, last_name=? WHERE id=?`,
+		passedData.FirstName, passedData.LastName, id)
+
+	if err != nil {
+		fmt.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Unable to update database"})
+		return
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Unable to get affected rows"})
+		return
+	}
+
+	if rowsAffected == 0 {
+		// customer not found
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Customer not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "success"})
+}
+
+func UpdateAddress(c *gin.Context, db *sql.DB) {
+	id := c.Query("id")
+	var passedData Customer
+
+	err := c.ShouldBindJSON(&passedData)
+	if err != nil {
+		// There was an issue binding the data
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to bind data"})
+		return
+	}
+
+	fullAddress := fmt.Sprintf("%s, %s, %s, %s, %s",
+		*passedData.Street, *passedData.City, *passedData.State, *passedData.PostalCode, *passedData.Country)
+
+	lat, lon, err := global.GetCoordinatesFromAddress(fullAddress)
+	if err != nil {
+		// if address doesnt exist
+		if err.Error() == "404" {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Nominatim couldn't find address"})
+			return
+		}
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to get latitude and longitude"})
+		return
+	}
+
+	passedData.Longitude = &lon
+	passedData.Latitude = &lat
+	passedData.FullAddress = &fullAddress
+
+	result, err := db.Exec(`UPDATE customers SET
+		full_address=?, country=?, state=?, city=?, postal_code=?, street=?, 
+		longitude=?, latitude=? WHERE id=?`,
+		passedData.FullAddress, passedData.Country, passedData.State, passedData.City, passedData.PostalCode, passedData.Street,
+		passedData.Longitude, passedData.Latitude, id)
+
+	if err != nil {
+		fmt.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Unable to update database"})
+		return
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Unable to get affected rows"})
+		return
+	}
+
+	if rowsAffected == 0 {
+		// customer not found
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Customer not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "success"})
 }
