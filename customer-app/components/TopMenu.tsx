@@ -177,12 +177,16 @@ const AccountMenu = ({ goToPage, currentRoute }: AccountMenuProps) => {
 
 const ProfilePic = () => {
   const { customer } = useCustomer();
+  const uri = customer.profilePicUrl;
+
+  useEffect(() => {
+    if (customer.profilePicUrl) {
+      Image.prefetch(uri); // Preload the image
+    }
+  }, [uri]);
+
   if (customer.profilePicUrl) {
     const uri = customer.profilePicUrl;
-
-    useEffect(() => {
-      Image.prefetch(uri); // Preload the image
-    }, [uri]);
 
     return (
       <Image
