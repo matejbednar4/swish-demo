@@ -1,6 +1,6 @@
 import { NavigationProp, NavigationState } from "@react-navigation/native";
 import * as secureStore from "expo-secure-store";
-import * as customerSdk from "../../../sdk/src/routes/customer";
+import * as customerSdk from "../../../shared/sdk/src/routes/customer";
 import { useCustomer } from "../CustomerContext";
 
 // -----------------------------------
@@ -74,25 +74,3 @@ export const getCurrentRoute = (route: any): currentRoute => {
 };
 // -----------------------------------
 
-export const loadCustomer = async (): Promise<customerSdk.Customer> => {
-  const response = await getStoredData("customer");
-  if (response && response !== "") {
-    return JSON.parse(response);
-  }
-
-  return customerSdk.emptyCustomer;
-};
-
-export const updateCustomerFromBackend = async () => {
-  const id = (await loadCustomer()).id;
-  const response = await customerSdk.getCustomerById(id);
-
-  if ("error" in response) {
-    console.error("here:", response.error);
-    return;
-  }
-
-  const json = response.json;
-  await storeData("customer", JSON.stringify(json));
-  return json;
-};

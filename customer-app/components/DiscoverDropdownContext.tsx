@@ -10,7 +10,7 @@ const DiscoverDropdownContext = createContext<DropdownContextType | undefined>(
 );
 
 export const DiscoverDropdownProvider = ({ children }: { children: any }) => {
-  const [dropdownValue, setDropdownValue] = useState<string>("any");
+  const [dropdownValue, setDropdownValue] = useState<string>("ANY");
 
   return (
     <DiscoverDropdownContext.Provider

@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Home, Discover, Favorites, Account } from "./Svg";
-import { currentRoute, getCurrentRoute, emptyRoute } from "./global/global";
+import {
+  currentRoute,
+  getCurrentRoute,
+  emptyRoute,
+} from "@/components/global/global";
 import { colors } from "@/constants/Colors";
 
 interface NavProps {

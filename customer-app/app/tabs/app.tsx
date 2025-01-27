@@ -8,15 +8,12 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import Account from "./account";
 import Favorites from "./favorites";
-import {
-  getStoredData,
-  loadCustomer,
-  storeData,
-} from "@/components/global/global";
 import { CustomerProvider, useCustomer } from "@/components/CustomerContext";
-import * as customerSdk from "../../../sdk/src/routes/customer";
+import * as customerSdk from "../../../shared/sdk/src/routes/customer";
 import { colors } from "@/constants/Colors";
 import Settings from "./settings";
+import { getStoredData } from "@/components/global/global";
+import { useRouter } from "expo-router";
 
 const Tab = createBottomTabNavigator();
 
@@ -29,36 +26,31 @@ export default function AppWrapper() {
 }
 
 function App() {
+  const router = useRouter();
   const { setCustomer } = useCustomer();
 
-  const updateCustomerFromBackend = async () => {
-    const storedCustomerString = await getStoredData("customer");
-    if (!storedCustomerString || storedCustomerString === "") {
-      Alert.alert("Nobody is logged in");
+  const setCustomerProvider = async () => {
+    const jwt = await getStoredData("jwt");
+
+    if (!jwt || jwt === "") {
+      router.push("..");
       return;
     }
 
-    const storedCustomer = JSON.parse(storedCustomerString);
-
-    if (storedCustomer.id === 0) {
-      Alert.alert("Nobody is logged in");
-      return;
-    }
-
-    const response = await customerSdk.getCustomerById(storedCustomer.id);
-
-    if ("error" in response) {
-      console.error("here:", response.error);
-      return;
-    }
-
+    const response = await customerSdk.getLoggedInCustomer(jwt);
     const json = response.json;
-    storeData("customer", JSON.stringify(json));
-    setCustomer(json);
+
+    if ("error" in json) {
+      Alert.alert("failed to load logged in user");
+      router.push("..");
+      return;
+    }
+
+    setCustomer(json.customer);
   };
 
   useEffect(() => {
-    updateCustomerFromBackend();
+    setCustomerProvider();
   }, []);
 
   return (
@@ -74,7 +66,6 @@ function App() {
           screenOptions={({ route }) => ({
             header: ({ navigation }) => (
               <TopMenu
-                title={route.name}
                 onBack={navigation.canGoBack() ? navigation.goBack : undefined}
               />
             ),

@@ -23,7 +23,7 @@ export default function Account() {
     >
       <Text
         style={textStyles.sectionHeading}
-      >{`Welcome, ${customer?.firstName} ${customer?.lastName}`}</Text>
+      >{`Welcome, ${customer?.fullName}`}</Text>
       <View style={styles.balanceWrapper}>
         <View style={styles.balanceBox}>
           <Text style={textStyles.balance}>${customer?.balance}</Text>

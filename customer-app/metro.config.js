@@ -8,7 +8,8 @@ const config = getDefaultConfig(__dirname);
 // Add the path to your /sdk folder
 config.watchFolders = [
   ...config.watchFolders,
-  path.resolve(__dirname, "../sdk"), // Adjust this path if needed
+  path.resolve(__dirname, "../shared/sdk"), // Adjust this path if needed
+  path.resolve(__dirname, "../shared/backend"), // Adjust this path if needed
 ];
 
 // Add file extensions for SVGs

@@ -1,0 +1,169 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Customer {
+  id            Int               @id @default(autoincrement())
+  email         String            @unique
+  fullName      String?           @map("full_name")
+  password      CustomerPassword?
+  address       CustomerAddress?
+  pfp           CustomerPfp?
+  rating        Int               @default(50)
+  balance       Int               @default(0)
+  totalRewards  Int               @default(0) @map("total_rewards")
+  visitedPlaces Int               @default(0) @map("visited_places")
+  soldImages    Int               @default(0) @map("sold_images")
+  createdAt     DateTime          @default(now()) @map("created_at")
+  updatedAt     DateTime          @updatedAt @map("updated_at")
+
+  posts Post[]
+
+  @@map("customers")
+}
+
+model CustomerPassword {
+  id         Int      @id @default(autoincrement())
+  customerId Int      @unique @map("customer_id")
+  hash       String
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@map("customer_passwords")
+}
+
+model CustomerAddress {
+  id         Int      @id @default(autoincrement())
+  customerId Int      @unique @map("customer_id")
+  country    String
+  region     String?
+  city       String
+  zip        String
+  street     String
+  latitude   String?
+  longitude  String?
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@map("customer_addresses")
+}
+
+model CustomerPfp {
+  id         Int      @id @default(autoincrement())
+  customerId Int      @unique @map("customer_id")
+  url        String   @unique
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@map("customer_pfps")
+}
+
+model Business {
+  id        Int                @id @default(autoincrement())
+  email     String             @unique
+  name      String
+  password  BusinessPassword?
+  address   BusinessAddress?
+  pfp       BusinessPfp?
+  headerPic BusinessHeaderPic?
+  type      BusinessType
+  createdAt DateTime           @default(now()) @map("created_at")
+  updatedAt DateTime           @updatedAt @map("updated_at")
+
+  posts Post[]
+
+  @@map("businesses")
+}
+
+model BusinessPassword {
+  id         Int      @id @default(autoincrement())
+  businessId Int      @unique @map("business_id")
+  hash       String
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@map("business_passwords")
+}
+
+model BusinessAddress {
+  id         Int      @id @default(autoincrement())
+  businessId Int      @unique @map("business_id")
+  country    String
+  region     String?
+  city       String
+  zip        String
+  street     String
+  latitude   String?
+  longitude  String?
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@map("business_addresses")
+}
+
+model BusinessPfp {
+  id         Int      @id @default(autoincrement())
+  businessId Int      @unique @map("business_id")
+  url        String   @unique
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@map("business_pfps")
+}
+
+model BusinessHeaderPic {
+  id         Int      @id @default(autoincrement())
+  businessId Int      @unique @map("business_id")
+  url        String   @unique
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@map("business_header_pics")
+}
+
+enum BusinessType {
+  RESTAURANT
+  GYM
+  HOTEL
+  SAUNA
+}
+
+model Post {
+  id         Int      @id @default(autoincrement())
+  customerId Int      @map("customer_id")
+  businessId Int      @map("business_id")
+  url        String   @unique
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: SetDefault)
+  business Business @relation(fields: [businessId], references: [id], onDelete: SetDefault)
+
+  @@unique([customerId, url])
+  @@map("posts")
+}

@@ -1,8 +1,5 @@
 import { useCustomer } from "@/components/CustomerContext";
-import {
-  storeData,
-  updateCustomerFromBackend,
-} from "@/components/global/global";
+import { storeData } from "@/components/global/global";
 import { colors } from "@/constants/Colors";
 import { useRouter } from "expo-router";
 import {
@@ -14,17 +11,17 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import * as customerSdk from "../../../sdk/src/routes/customer";
+import * as customerSdk from "../../../shared/sdk/src/routes/customer";
 import { useEffect, useRef, useState } from "react";
 import { Pencil } from "@/components/Svg";
 
 export default function Settings() {
   const router = useRouter();
-  const { customer, setCustomer } = useCustomer();
+  const { customer, setCustomer } = useCustomer() as any;
 
   const logOut = () => {
-    storeData("customer", "");
-    setCustomer(customerSdk.emptyCustomer);
+    storeData("jwt", "");
+    setCustomer(undefined);
     router.push("/");
   };
 
@@ -84,8 +81,6 @@ const AccountDetails = ({
   };
 
   const updateCustomer = async () => {
-    const response = await updateCustomerFromBackend();
-    if (response) setCustomer(response);
     cancelAllEdits();
   };
 
@@ -99,30 +94,30 @@ const AccountDetails = ({
       setNameEditable(true);
       setTimeout(() => firstNameInputRef.current?.focus(), 100);
     },
-    submit: async () => {
-      if (newFirstName === "" || newLastName === "") {
-        Alert.alert("You must fill all of the address fields");
-        return;
-      }
+    // submit: async () => {
+    //   if (newFirstName === "" || newLastName === "") {
+    //     Alert.alert("You must fill all of the address fields");
+    //     return;
+    //   }
 
-      const data = {
-        firstName: newFirstName,
-        lastName: newLastName,
-      };
+    //   const data = {
+    //     firstName: newFirstName,
+    //     lastName: newLastName,
+    //   };
 
-      const response = await customerSdk.updateCustomerName(customer.id, data);
+    //   const response = await customerSdk.updateCustomerName(customer.id, data);
 
-      if ("error" in response) {
-        console.error(response.error);
-        cancelAllEdits();
-        return;
-      }
+    //   if ("error" in response) {
+    //     console.error(response.error);
+    //     cancelAllEdits();
+    //     return;
+    //   }
 
-      if (response.status === 200) {
-        updateCustomer();
-        return;
-      }
-    },
+    //   if (response.status === 200) {
+    //     updateCustomer();
+    //     return;
+    //   }
+    // },
   };
 
   const addressFunctions = {
@@ -138,48 +133,48 @@ const AccountDetails = ({
       setAddressEditable(true);
       setTimeout(() => streetInputRef.current?.focus(), 100);
     },
-    submit: async () => {
-      const falseConditions =
-        newStreet === "" ||
-        newPostalCode === "" ||
-        newCity === "" ||
-        newCountry === "";
+    // submit: async () => {
+    //   const falseConditions =
+    //     newStreet === "" ||
+    //     newPostalCode === "" ||
+    //     newCity === "" ||
+    //     newCountry === "";
 
-      if (falseConditions) {
-        Alert.alert("You must fill all of the address fields");
-        return;
-      }
+    //   if (falseConditions) {
+    //     Alert.alert("You must fill all of the address fields");
+    //     return;
+    //   }
 
-      const data = {
-        street: newStreet,
-        postalCode: newPostalCode,
-        city: newCity,
-        state: newState,
-        country: newCountry,
-      };
+    //   const data = {
+    //     street: newStreet,
+    //     postalCode: newPostalCode,
+    //     city: newCity,
+    //     state: newState,
+    //     country: newCountry,
+    //   };
 
-      const response = await customerSdk.updateCustomerAddress(
-        customer.id,
-        data
-      );
+    //   const response = await customerSdk.updateCustomerAddress(
+    //     customer.id,
+    //     data
+    //   );
 
-      if (response.status === 404) {
-        Alert.alert("The provided address does not exist");
-        cancelAllEdits();
-        return;
-      }
+    //   if (response.status === 404) {
+    //     Alert.alert("The provided address does not exist");
+    //     cancelAllEdits();
+    //     return;
+    //   }
 
-      if ("error" in response) {
-        console.error(response.error);
-        cancelAllEdits();
-        return;
-      }
+    //   if ("error" in response) {
+    //     console.error(response.error);
+    //     cancelAllEdits();
+    //     return;
+    //   }
 
-      if (response.status === 200) {
-        updateCustomer();
-        return;
-      }
-    },
+    //   if (response.status === 200) {
+    //     updateCustomer();
+    //     return;
+    //   }
+    // },
   };
 
   useEffect(() => {
@@ -193,9 +188,21 @@ const AccountDetails = ({
       {/* Search box */}
       <View style={detailStyles.box}>
         {/* First Field */}
-        <View style={[detailStyles.field, { borderBottomWidth: 1 }]}>
+        <View style={detailStyles.field}>
           <View style={detailStyles.inputWrapper}>
-            <Text style={textStyles.detailHeading}>Name</Text>
+            <Text style={textStyles.detailHeading}>Full Name:</Text>
+            <TextInput
+              ref={firstNameInputRef}
+              editable={!nameEditable ? false : true}
+              value={newFirstName}
+              onChangeText={setNewFirstName}
+              placeholder={
+                !nameEditable ? `${customer.fullName}` : "_ _ _ _ _ _ _ _"
+              }
+              placeholderTextColor={colors.placeholder}
+              autoCapitalize="none"
+              style={detailStyles.input}
+            />
           </View>
           {!nameEditable ? (
             <TouchableOpacity
@@ -206,7 +213,9 @@ const AccountDetails = ({
             </TouchableOpacity>
           ) : (
             <View style={detailStyles.changeButtonsWrapper}>
-              <TouchableOpacity onPress={nameFunctions.submit}>
+              <TouchableOpacity
+              // onPress={nameFunctions.submit}
+              >
                 <Text>YES</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={cancelAllEdits}>
@@ -214,43 +223,6 @@ const AccountDetails = ({
               </TouchableOpacity>
             </View>
           )}
-        </View>
-        <View style={detailStyles.field}>
-          <View style={detailStyles.inputWrapper}>
-            <Text style={textStyles.detailHeading}>
-              {nameEditable ? "First Name*" : "First Name:"}
-            </Text>
-            <TextInput
-              ref={firstNameInputRef}
-              editable={!nameEditable ? false : true}
-              value={newFirstName}
-              onChangeText={setNewFirstName}
-              placeholder={
-                !nameEditable ? `${customer.firstName}` : "_ _ _ _ _ _ _ _"
-              }
-              placeholderTextColor={colors.placeholder}
-              autoCapitalize="none"
-              style={detailStyles.input}
-            />
-          </View>
-        </View>
-        <View style={detailStyles.field}>
-          <View style={detailStyles.inputWrapper}>
-            <Text style={textStyles.detailHeading}>
-              {nameEditable ? "Last Name*" : "Last Name:"}
-            </Text>
-            <TextInput
-              editable={!nameEditable ? false : true}
-              value={newLastName}
-              onChangeText={setNewLastName}
-              placeholder={
-                !nameEditable ? `${customer.lastName}` : "_ _ _ _ _ _ _ _"
-              }
-              placeholderTextColor={colors.placeholder}
-              autoCapitalize="none"
-              style={detailStyles.input}
-            />
-          </View>
         </View>
         {/* Second Field */}
         <View
@@ -271,7 +243,9 @@ const AccountDetails = ({
             </TouchableOpacity>
           ) : (
             <View style={detailStyles.changeButtonsWrapper}>
-              <TouchableOpacity onPress={addressFunctions.submit}>
+              <TouchableOpacity
+              // onPress={addressFunctions.submit}
+              >
                 <Text>YES</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={cancelAllEdits}>
@@ -291,7 +265,9 @@ const AccountDetails = ({
               value={newStreet}
               onChangeText={setNewStreet}
               placeholder={
-                !addressEditable ? `${customer.street}` : "_ _ _ _ _ _ _ _"
+                !addressEditable
+                  ? `${customer.address?.street}`
+                  : "_ _ _ _ _ _ _ _"
               }
               placeholderTextColor={colors.placeholder}
               autoCapitalize="none"
@@ -302,14 +278,16 @@ const AccountDetails = ({
         <View style={detailStyles.field}>
           <View style={detailStyles.inputWrapper}>
             <Text style={textStyles.detailHeading}>
-              {addressEditable ? "Postal Code*" : "Postal Code:"}
+              {addressEditable ? "ZIP Code*" : "ZIP Code:"}
             </Text>
             <TextInput
               editable={!addressEditable ? false : true}
               value={newPostalCode}
               onChangeText={setNewPostalCode}
               placeholder={
-                !addressEditable ? `${customer.postalCode}` : "_ _ _ _ _ _ _ _"
+                !addressEditable
+                  ? `${customer.address?.zip}`
+                  : "_ _ _ _ _ _ _ _"
               }
               placeholderTextColor={colors.placeholder}
               autoCapitalize="none"
@@ -317,19 +295,21 @@ const AccountDetails = ({
             />
           </View>
         </View>
-        {customer.state ||
+        {customer.address?.region ||
           (addressEditable && (
             <View style={detailStyles.field}>
               <View style={detailStyles.inputWrapper}>
                 <Text style={textStyles.detailHeading}>
-                  {addressEditable ? "State" : "State:"}
+                  {addressEditable ? "Region" : "Region:"}
                 </Text>
                 <TextInput
                   editable={!addressEditable ? false : true}
                   value={newState}
                   onChangeText={setNewState}
                   placeholder={
-                    !addressEditable ? `${customer.state}` : "_ _ _ _ _ _ _ _"
+                    !addressEditable
+                      ? `${customer.address?.region}`
+                      : "_ _ _ _ _ _ _ _"
                   }
                   placeholderTextColor={colors.placeholder}
                   autoCapitalize="none"
@@ -348,7 +328,9 @@ const AccountDetails = ({
               value={newCity}
               onChangeText={setNewCity}
               placeholder={
-                !addressEditable ? `${customer.city}` : "_ _ _ _ _ _ _ _"
+                !addressEditable
+                  ? `${customer.address?.city}`
+                  : "_ _ _ _ _ _ _ _"
               }
               placeholderTextColor={colors.placeholder}
               autoCapitalize="none"
@@ -366,7 +348,9 @@ const AccountDetails = ({
               value={newCountry}
               onChangeText={setNewCountry}
               placeholder={
-                !addressEditable ? `${customer.country}` : "_ _ _ _ _ _ _ _"
+                !addressEditable
+                  ? `${customer.address?.country}`
+                  : "_ _ _ _ _ _ _ _"
               }
               placeholderTextColor={colors.placeholder}
               autoCapitalize="none"

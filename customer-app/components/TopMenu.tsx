@@ -1,9 +1,13 @@
 import { useEffect, useState } from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import * as customerSdk from "../../sdk/src/routes/customer";
+import * as customerSdk from "../../shared/sdk/src/routes/customer";
 import { useRoute } from "@react-navigation/native";
-import { useCustomer } from "./CustomerContext";
-import { currentRoute, emptyRoute, getCurrentRoute } from "./global/global";
+import { loadCustomer, useCustomer } from "./CustomerContext";
+import {
+  currentRoute,
+  emptyRoute,
+  getCurrentRoute,
+} from "@/components/global/global";
 import { useNavigation } from "expo-router";
 import { colors } from "@/constants/Colors";
 import { Account, AccountSettings } from "./Svg";
@@ -31,15 +35,10 @@ interface AccountMenuProps {
   currentRoute: currentRoute;
 }
 
-interface MenuProps {
-  title: string;
-  onBack?: () => void;
-}
-
-export default function TopMenu({ title, onBack }: MenuProps) {
+export default function TopMenu({ onBack }: { onBack?: () => void }) {
   const navigation: any = useNavigation();
   const route = useRoute();
-  const { customer } = useCustomer();
+  const { customer } = useCustomer() as any;
   const [currentRoute, setCurrentRoute] = useState<currentRoute>(emptyRoute);
 
   const goToPage = {
@@ -97,7 +96,7 @@ export default function TopMenu({ title, onBack }: MenuProps) {
   );
 }
 
-const HomeMenu = ({ goToPage }: PageMenuProps) => {
+const HomeMenu = ({ goToPage, customer }: PageMenuProps) => {
   return (
     <View style={styles.main}>
       <View style={styles.menu}>
@@ -108,7 +107,7 @@ const HomeMenu = ({ goToPage }: PageMenuProps) => {
         </TouchableOpacity>
         <View style={styles.rightSide}>
           <TouchableOpacity style={styles.pfp} onPress={goToPage.account}>
-            <ProfilePic />
+            <ProfilePic customer={customer} />
           </TouchableOpacity>
         </View>
       </View>
@@ -116,7 +115,7 @@ const HomeMenu = ({ goToPage }: PageMenuProps) => {
   );
 };
 
-const DiscoverMenu = ({ goToPage }: PageMenuProps) => {
+const DiscoverMenu = ({ goToPage, customer }: PageMenuProps) => {
   return (
     <View style={styles.main}>
       <View style={styles.menu}>
@@ -127,7 +126,7 @@ const DiscoverMenu = ({ goToPage }: PageMenuProps) => {
         </TouchableOpacity>
         <View style={styles.rightSide}>
           <TouchableOpacity style={styles.pfp} onPress={goToPage.account}>
-            <ProfilePic />
+            <ProfilePic customer={customer} />
           </TouchableOpacity>
         </View>
       </View>
@@ -135,7 +134,7 @@ const DiscoverMenu = ({ goToPage }: PageMenuProps) => {
   );
 };
 
-const FavoritesMenu = ({ goToPage }: PageMenuProps) => {
+const FavoritesMenu = ({ goToPage, customer }: PageMenuProps) => {
   return (
     <View style={styles.main}>
       <View style={styles.menu}>
@@ -146,7 +145,7 @@ const FavoritesMenu = ({ goToPage }: PageMenuProps) => {
         </TouchableOpacity>
         <View style={styles.rightSide}>
           <TouchableOpacity style={styles.pfp} onPress={goToPage.account}>
-            <ProfilePic />
+            <ProfilePic customer={customer} />
           </TouchableOpacity>
         </View>
       </View>
@@ -154,13 +153,17 @@ const FavoritesMenu = ({ goToPage }: PageMenuProps) => {
   );
 };
 
-const AccountMenu = ({ goToPage, currentRoute }: AccountMenuProps) => {
+const AccountMenu = ({
+  goToPage,
+  currentRoute,
+  customer,
+}: AccountMenuProps) => {
   return (
     <View style={styles.accountMain}>
       <View style={styles.accountLeftSide}></View>
       <View style={styles.accountMiddle}>
         <View style={styles.accountPfp}>
-          <ProfilePic />
+          <ProfilePic customer={customer} />
         </View>
       </View>
       <View style={styles.accountRightSide}>
@@ -175,19 +178,10 @@ const AccountMenu = ({ goToPage, currentRoute }: AccountMenuProps) => {
   );
 };
 
-const ProfilePic = () => {
-  const { customer } = useCustomer();
-  const uri = customer.profilePicUrl;
+const ProfilePic = ({ customer }: { customer: customerSdk.Customer }) => {
+  const uri = customer?.pfp?.url;
 
-  useEffect(() => {
-    if (customer.profilePicUrl) {
-      Image.prefetch(uri); // Preload the image
-    }
-  }, [uri]);
-
-  if (customer.profilePicUrl) {
-    const uri = customer.profilePicUrl;
-
+  if (uri) {
     return (
       <Image
         source={{ uri, cache: "force-cache" }}
@@ -196,7 +190,7 @@ const ProfilePic = () => {
     );
   }
 
-  if (!customer.profilePicUrl) {
+  if (!uri) {
     return (
       <View>
         <Account
